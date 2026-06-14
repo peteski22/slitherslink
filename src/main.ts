@@ -4,9 +4,12 @@ import { DIFFICULTIES } from './config/difficulty';
 import { Controls } from './input/controls';
 import { makeCamera } from './render/camera';
 import { render } from './render/renderer';
+import { scoreOf } from './game/leaderboard';
+import { Hud } from './ui/hud';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
+const hud = new Hud(document.getElementById('hud') as HTMLElement);
 
 function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -24,6 +27,7 @@ const settings = DIFFICULTIES.normal;
 
 let state = createGame('normal', 'pink', rng);
 let player = state.snakes.find((s) => s.id === PLAYER_ID)!;
+let best = 0; // session best length (until persistence lands)
 
 const FIXED_DT = 1 / 60;
 let last = performance.now();
@@ -37,6 +41,7 @@ function frame(now: number) {
     update(state, FIXED_DT, input, settings, rng);
     acc -= FIXED_DT;
   }
+  best = Math.max(best, scoreOf(player));
   if (!player.alive) {
     // instant restart for testing (final main shows a game-over screen instead)
     state = createGame('normal', 'pink', rng);
@@ -44,6 +49,7 @@ function frame(now: number) {
   }
   const cam = makeCamera(player.segments[0], window.innerWidth, window.innerHeight, 1);
   render(ctx, state, cam);
+  hud.update(state, PLAYER_ID, best);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

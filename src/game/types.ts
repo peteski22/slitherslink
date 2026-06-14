@@ -24,7 +24,9 @@ export interface Food {
 }
 
 export interface World {
-  radius: number; // arena is a circle centered at (0,0)
+  // Rectangular arena centered at (0,0): spans x in [-width/2, width/2], y in [-height/2, height/2].
+  width: number;
+  height: number;
 }
 
 export interface GameState {

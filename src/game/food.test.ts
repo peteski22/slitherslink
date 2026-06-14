@@ -7,7 +7,7 @@ import type { GameState } from './types';
 import { FOOD_VALUE } from './constants';
 
 function blankState(): GameState {
-  return { world: { radius: 1000 }, snakes: [], food: [], nextFoodId: 1, tick: 0 };
+  return { world: { width: 2000, height: 1500 }, snakes: [], food: [], nextFoodId: 1, tick: 0 };
 }
 
 describe('food', () => {
@@ -50,6 +50,6 @@ describe('food', () => {
   });
 
   it('targetFoodCount scales with world size', () => {
-    expect(targetFoodCount({ radius: 2000 })).toBeGreaterThan(targetFoodCount({ radius: 1000 }));
+    expect(targetFoodCount({ width: 2000, height: 2000 })).toBeGreaterThan(targetFoodCount({ width: 1000, height: 1000 }));
   });
 });

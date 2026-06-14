@@ -4,7 +4,7 @@ import { createSnake, stepSnake, applyGrowth } from './game/snake';
 import { makeCamera } from './render/camera';
 import { render } from './render/renderer';
 import { Controls } from './input/controls';
-import { TURN_RATE, BASE_SPEED, WORLD_RADIUS } from './game/constants';
+import { TURN_RATE, BASE_SPEED, WORLD_WIDTH, WORLD_HEIGHT } from './game/constants';
 import type { GameState } from './game/types';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -23,7 +23,7 @@ const controls = new Controls(canvas);
 controls.setMouseMode(true); // desktop testing: drive with the mouse
 
 const state: GameState = {
-  world: { radius: WORLD_RADIUS },
+  world: { width: WORLD_WIDTH, height: WORLD_HEIGHT },
   snakes: [createSnake({ id: 'player', name: 'You', isPlayer: true, skinId: 'pink', pos: { x: 0, y: 0 }, heading: 0 })],
   food: [],
   nextFoodId: 1,

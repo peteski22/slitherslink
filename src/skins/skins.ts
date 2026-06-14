@@ -45,6 +45,10 @@ export function drawSnake(
     if (skin.pattern === 'stripes' && i % 2 === 0) ctx.fillStyle = skin.accent;
     else ctx.fillStyle = skin.body;
     ctx.fill();
+    // outline each section so the snake reads as connected segments that visibly move
+    ctx.lineWidth = Math.max(1, r * 0.14);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.stroke();
     if (skin.pattern === 'spots' && i % 3 === 0) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, r * 0.4, 0, Math.PI * 2);

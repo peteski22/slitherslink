@@ -11,13 +11,27 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   ctx.fillStyle = '#ffe3a3';
   ctx.fillRect(0, 0, width, height);
 
-  // arena border ring
-  const center = worldToScreen(cam, { x: 0, y: 0 });
-  ctx.beginPath();
-  ctx.arc(center.x, center.y, state.world.radius * cam.zoom, 0, Math.PI * 2);
+  // patterned background (world-space dots) so the snake's motion is clearly visible
+  const dotSpacing = 70;
+  const left = cam.focus.x - width / 2 / cam.zoom;
+  const top = cam.focus.y - height / 2 / cam.zoom;
+  const right = cam.focus.x + width / 2 / cam.zoom;
+  const bottom = cam.focus.y + height / 2 / cam.zoom;
+  ctx.fillStyle = 'rgba(176, 130, 60, 0.18)';
+  for (let wx = Math.floor(left / dotSpacing) * dotSpacing; wx <= right; wx += dotSpacing) {
+    for (let wy = Math.floor(top / dotSpacing) * dotSpacing; wy <= bottom; wy += dotSpacing) {
+      const p = worldToScreen(cam, { x: wx, y: wy });
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.5 * cam.zoom, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // arena border (rectangle)
+  const tl = worldToScreen(cam, { x: -state.world.width / 2, y: -state.world.height / 2 });
   ctx.lineWidth = 8;
   ctx.strokeStyle = '#e0a85b';
-  ctx.stroke();
+  ctx.strokeRect(tl.x, tl.y, state.world.width * cam.zoom, state.world.height * cam.zoom);
 
   // food
   for (const f of state.food) {

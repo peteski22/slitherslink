@@ -39,15 +39,14 @@ export function burstFromSnake(state: GameState, s: Snake): void {
 
 /** Desired ambient food count for a world (area * density). */
 export function targetFoodCount(world: World): number {
-  const area = Math.PI * world.radius * world.radius;
+  const area = world.width * world.height;
   return Math.round(area * FOOD_DENSITY);
 }
 
-/** A uniformly random point inside the circular world (excludes a margin near the border). */
+/** A uniformly random point inside the rectangular world (keeps a margin off the walls). */
 export function randomWorldPoint(world: World, rng: () => number): Vec2 {
-  const r = Math.sqrt(rng()) * (world.radius * 0.95);
-  const a = rng() * Math.PI * 2;
-  return vec(Math.cos(a) * r, Math.sin(a) * r);
+  const m = 0.96; // margin so spawns aren't flush against the deadly border
+  return vec((rng() - 0.5) * world.width * m, (rng() - 0.5) * world.height * m);
 }
 
 /** Top up ambient food toward the target count. */

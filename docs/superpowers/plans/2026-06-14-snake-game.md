@@ -116,7 +116,7 @@ import { createSnake, stepSnake, applyGrowth } from './game/snake';
 import { makeCamera } from './render/camera';
 import { render } from './render/renderer';
 import { Controls } from './input/controls';
-import { TURN_RATE, BASE_SPEED, WORLD_RADIUS } from './game/constants';
+import { TURN_RATE, BASE_SPEED, WORLD_WIDTH, WORLD_HEIGHT } from './game/constants';
 import type { GameState } from './game/types';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -135,7 +135,7 @@ const controls = new Controls(canvas);
 controls.setMouseMode(true); // desktop testing: drive with the mouse
 
 const state: GameState = {
-  world: { radius: WORLD_RADIUS },
+  world: { width: WORLD_WIDTH, height: WORLD_HEIGHT },
   snakes: [createSnake({ id: 'player', name: 'You', isPlayer: true, skinId: 'pink', pos: { x: 0, y: 0 }, heading: 0 })],
   food: [],
   nextFoodId: 1,
@@ -532,17 +532,18 @@ No test (pure declarations). These are consumed and thereby exercised by later t
 // All tunable gameplay numbers live here so balancing is a one-file change.
 
 // Body shape
-export const SEGMENT_SPACING = 6;     // world units between body points
+export const SEGMENT_SPACING = 14;    // world units between body points (spaced but still overlapping)
 export const START_SEGMENTS = 8;      // body points at spawn
 export const BASE_RADIUS = 9;         // segment radius (px world units) at mass 0
 export const GIRTH_FACTOR = 1.3;      // radius added per sqrt(mass)
 export const MASS_PER_SEGMENT = 4;    // mass needed to add one body point
 
 // Movement (same rules for every snake on every difficulty)
-export const WORLD_RADIUS = 1900;     // arena radius — identical on all difficulties
-export const BASE_SPEED = 120;        // world units/sec for every snake
-export const TURN_RATE = 3.2;         // player max turn (rad/sec)
-export const BOT_TURN_RATE = 2.6;     // bot max turn (rad/sec)
+export const WORLD_WIDTH = 4200;      // rectangular arena width (landscape) — identical on all difficulties
+export const WORLD_HEIGHT = 2800;     // rectangular arena height
+export const BASE_SPEED = 150;        // world units/sec for every snake
+export const TURN_RATE = 8.0;         // player max turn (rad/sec) — very tight; can loop on itself
+export const BOT_TURN_RATE = 7.0;     // bot max turn (rad/sec)
 
 // Growth / food
 export const START_MASS = 12;
@@ -588,7 +589,9 @@ export interface Food {
 }
 
 export interface World {
-  radius: number; // arena is a circle centered at (0,0)
+  // Rectangular arena centered at (0,0): spans x in [-width/2, width/2], y in [-height/2, height/2].
+  width: number;
+  height: number;
 }
 
 export interface GameState {
@@ -872,7 +875,7 @@ import type { GameState } from './types';
 import { FOOD_VALUE } from './constants';
 
 function blankState(): GameState {
-  return { world: { radius: 1000 }, snakes: [], food: [], nextFoodId: 1, tick: 0 };
+  return { world: { width: 2000, height: 1500 }, snakes: [], food: [], nextFoodId: 1, tick: 0 };
 }
 
 describe('food', () => {
@@ -915,7 +918,7 @@ describe('food', () => {
   });
 
   it('targetFoodCount scales with world size', () => {
-    expect(targetFoodCount({ radius: 2000 })).toBeGreaterThan(targetFoodCount({ radius: 1000 }));
+    expect(targetFoodCount({ width: 2000, height: 2000 })).toBeGreaterThan(targetFoodCount({ width: 1000, height: 1000 }));
   });
 });
 ```
@@ -970,15 +973,14 @@ export function burstFromSnake(state: GameState, s: Snake): void {
 
 /** Desired ambient food count for a world (area * density). */
 export function targetFoodCount(world: World): number {
-  const area = Math.PI * world.radius * world.radius;
+  const area = world.width * world.height;
   return Math.round(area * FOOD_DENSITY);
 }
 
-/** A uniformly random point inside the circular world (excludes a margin near the border). */
+/** A uniformly random point inside the rectangular world (keeps a margin off the walls). */
 export function randomWorldPoint(world: World, rng: () => number): Vec2 {
-  const r = Math.sqrt(rng()) * (world.radius * 0.95);
-  const a = rng() * Math.PI * 2;
-  return vec(Math.cos(a) * r, Math.sin(a) * r);
+  const m = 0.96; // margin so spawns aren't flush against the deadly border
+  return vec((rng() - 0.5) * world.width * m, (rng() - 0.5) * world.height * m);
 }
 
 /** Top up ambient food toward the target count. */
@@ -1039,11 +1041,12 @@ describe('collision', () => {
     expect(headHitsSnake(a, a)).toBe(false);
   });
 
-  it('detects the head leaving the circular world', () => {
+  it('detects the head leaving the rectangular world', () => {
     const a = createSnake({ id: 'a', name: 'A', isPlayer: true, skinId: 'pink', pos: vec(0, 0), heading: 0 });
-    expect(headOutsideBorder(a, { radius: 1000 })).toBe(false);
+    const world = { width: 2000, height: 2000 };
+    expect(headOutsideBorder(a, world)).toBe(false);
     a.segments[0] = vec(1001, 0);
-    expect(headOutsideBorder(a, { radius: 1000 })).toBe(true);
+    expect(headOutsideBorder(a, world)).toBe(true);
   });
 });
 ```
@@ -1056,7 +1059,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement `src/game/collision.ts`**
 
 ```ts
-import { distance, length as vlen } from '../math/vec2';
+import { distance } from '../math/vec2';
 import type { Snake, World } from './types';
 import { snakeRadius } from './snake';
 import { SEGMENT_SPACING } from './constants';
@@ -1084,9 +1087,10 @@ export function headHitsSnake(attacker: Snake, victim: Snake): boolean {
   return false;
 }
 
-/** True if the snake's head center is beyond the world radius. */
+/** True if the snake's head is outside the rectangular world bounds. */
 export function headOutsideBorder(s: Snake, world: World): boolean {
-  return vlen(s.segments[0]) > world.radius;
+  const h = s.segments[0];
+  return Math.abs(h.x) > world.width / 2 || Math.abs(h.y) > world.height / 2;
 }
 ```
 
@@ -1210,8 +1214,8 @@ import type { GameState } from './types';
 import { DIFFICULTIES } from '../config/difficulty';
 import { MIN_BOOST_MASS } from './constants';
 
-function state(radius = 1000): GameState {
-  return { world: { radius }, snakes: [], food: [], nextFoodId: 1, tick: 0 };
+function state(width = 2000, height = 2000): GameState {
+  return { world: { width, height }, snakes: [], food: [], nextFoodId: 1, tick: 0 };
 }
 
 describe('bot AI', () => {
@@ -1226,7 +1230,7 @@ describe('bot AI', () => {
   });
 
   it('steers back inward when near the border', () => {
-    const st = state(300);
+    const st = state(600, 600);
     const bot = createSnake({ id: 'b', name: 'Bot', isPlayer: false, skinId: 'blue', pos: vec(290, 0), heading: 0 });
     bot.heading = 0; // heading straight out toward +x border
     st.snakes.push(bot);
@@ -1264,7 +1268,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement `src/game/bots.ts`**
 
 ```ts
-import { Vec2, sub, add, scale, distance, length as vlen, angleOf, fromAngle } from '../math/vec2';
+import { Vec2, sub, add, scale, distance, angleOf, fromAngle } from '../math/vec2';
 import type { GameState, Snake } from './types';
 import type { DifficultySettings } from '../config/difficulty';
 import { snakeRadius } from './snake';
@@ -1286,9 +1290,10 @@ export function decideHeading(
 ): number {
   const headPos = bot.segments[0];
 
-  // 1) Border avoidance: if near the edge, steer toward center.
-  const distFromCenter = vlen(headPos);
-  if (state.world.radius - distFromCenter < BORDER_LOOKAHEAD) {
+  // 1) Border avoidance: if near any wall, steer back toward center.
+  const dx = state.world.width / 2 - Math.abs(headPos.x);
+  const dy = state.world.height / 2 - Math.abs(headPos.y);
+  if (Math.min(dx, dy) < BORDER_LOOKAHEAD) {
     return angleOf(scale(headPos, -1)); // point back toward (0,0)
   }
 
@@ -1432,7 +1437,7 @@ describe('simulation', () => {
   it('kills the player on a border crossing and bursts food', () => {
     const st = createGame('normal', 'pink', seedRng);
     const player = st.snakes.find((s) => s.id === PLAYER_ID)!;
-    player.segments[0] = { x: st.world.radius + 50, y: 0 };
+    player.segments[0] = { x: st.world.width / 2 + 50, y: 0 };
     const foodBefore = st.food.length;
     update(st, 1 / 60, { steerAngle: null, boost: false }, DIFFICULTIES.normal, seedRng);
     expect(player.alive).toBe(false);
@@ -1442,7 +1447,7 @@ describe('simulation', () => {
   it('border is deadly on easy too (rules are difficulty-independent)', () => {
     const st = createGame('easy', 'pink', seedRng);
     const player = st.snakes.find((s) => s.id === PLAYER_ID)!;
-    player.segments[0] = { x: st.world.radius + 50, y: 0 };
+    player.segments[0] = { x: st.world.width / 2 + 50, y: 0 };
     update(st, 1 / 60, { steerAngle: null, boost: false }, DIFFICULTIES.easy, seedRng);
     expect(player.alive).toBe(false);
   });
@@ -1450,7 +1455,7 @@ describe('simulation', () => {
   it('uses the same world size on every difficulty', () => {
     const easy = createGame('easy', 'pink', seedRng);
     const hard = createGame('hard', 'pink', seedRng);
-    expect(easy.world.radius).toBe(hard.world.radius);
+    expect(easy.world.width).toBe(hard.world.width);
   });
 });
 ```
@@ -1472,7 +1477,7 @@ import { tryEat, burstFromSnake, replenishFood, randomWorldPoint } from './food'
 import { headHitsSnake, headOutsideBorder } from './collision';
 import { decideHeading, decideBoost } from './bots';
 import {
-  WORLD_RADIUS, BASE_SPEED, TURN_RATE, BOT_TURN_RATE, MIN_BOOST_MASS, BOOST_DRAIN,
+  WORLD_WIDTH, WORLD_HEIGHT, BASE_SPEED, TURN_RATE, BOT_TURN_RATE, MIN_BOOST_MASS, BOOST_DRAIN,
   BOOST_MULTIPLIER, BOOST_DROP_INTERVAL, FOOD_VALUE, START_MASS,
 } from './constants';
 
@@ -1487,7 +1492,7 @@ const SKIN_IDS = ['pink', 'blue', 'green', 'dragon', 'dog', 'rainbow', 'sun', 'm
 export function createGame(difficulty: Difficulty, playerSkinId: string, rng: () => number): GameState {
   const settings = DIFFICULTIES[difficulty];
   const state: GameState = {
-    world: { radius: WORLD_RADIUS },
+    world: { width: WORLD_WIDTH, height: WORLD_HEIGHT },
     snakes: [],
     food: [],
     nextFoodId: 1,
@@ -1875,6 +1880,10 @@ export function drawSnake(
     if (skin.pattern === 'stripes' && i % 2 === 0) ctx.fillStyle = skin.accent;
     else ctx.fillStyle = skin.body;
     ctx.fill();
+    // outline each section so the snake reads as connected segments that visibly move
+    ctx.lineWidth = Math.max(1, r * 0.14);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.stroke();
     if (skin.pattern === 'spots' && i % 3 === 0) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, r * 0.4, 0, Math.PI * 2);
@@ -1970,13 +1979,27 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   ctx.fillStyle = '#ffe3a3';
   ctx.fillRect(0, 0, width, height);
 
-  // arena border ring
-  const center = worldToScreen(cam, { x: 0, y: 0 });
-  ctx.beginPath();
-  ctx.arc(center.x, center.y, state.world.radius * cam.zoom, 0, Math.PI * 2);
+  // patterned background (world-space dots) so the snake's motion is clearly visible
+  const dotSpacing = 70;
+  const left = cam.focus.x - width / 2 / cam.zoom;
+  const top = cam.focus.y - height / 2 / cam.zoom;
+  const right = cam.focus.x + width / 2 / cam.zoom;
+  const bottom = cam.focus.y + height / 2 / cam.zoom;
+  ctx.fillStyle = 'rgba(176, 130, 60, 0.18)';
+  for (let wx = Math.floor(left / dotSpacing) * dotSpacing; wx <= right; wx += dotSpacing) {
+    for (let wy = Math.floor(top / dotSpacing) * dotSpacing; wy <= bottom; wy += dotSpacing) {
+      const p = worldToScreen(cam, { x: wx, y: wy });
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.5 * cam.zoom, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // arena border (rectangle)
+  const tl = worldToScreen(cam, { x: -state.world.width / 2, y: -state.world.height / 2 });
   ctx.lineWidth = 8;
   ctx.strokeStyle = '#e0a85b';
-  ctx.stroke();
+  ctx.strokeRect(tl.x, tl.y, state.world.width * cam.zoom, state.world.height * cam.zoom);
 
   // food
   for (const f of state.food) {
@@ -2894,7 +2917,7 @@ git commit -m "chore: final verification pass"
 
 - **Determinism in tests:** simulation/bot tests inject `rng`. `main.ts` uses `Math.random` at runtime, which is fine.
 - **`headHitsSnake` self-collision:** only points past `SELF_SKIP` count, so a snake doesn't die on its own neck but can die on its own coiled body — matching snake.io.
-- **Rules vs. difficulty:** all *game rules* (speed `BASE_SPEED`, arena `WORLD_RADIUS`, deadly border, growth, collisions) live in `src/game/constants.ts` and are identical on every difficulty. `src/config/difficulty.ts` holds *only* bot-AI knobs (`botCount`, `aggression`, `cunning`). Keep that separation: never add a rule to `DifficultySettings`.
+- **Rules vs. difficulty:** all *game rules* (speed `BASE_SPEED`, arena `WORLD_WIDTH`/`WORLD_HEIGHT`, deadly border, growth, collisions) live in `src/game/constants.ts` and are identical on every difficulty. `src/config/difficulty.ts` holds *only* bot-AI knobs (`botCount`, `aggression`, `cunning`). Keep that separation: never add a rule to `DifficultySettings`.
 - **Border:** always deadly — there is no per-difficulty border behavior.
 - **Bot boost:** boost is symmetric — bots boost via `decideBoost` (chase a smaller, nearby player or dash for close food), scaled by aggression/cunning, while keeping a mass buffer above `MIN_BOOST_MASS`. The boost mass-shed/food-drop loop in `update()` already applies to any boosting snake.
 - **Audio:** all sounds are synthesized originals (no snake.io assets). The `AudioContext` only starts from the Play tap (`audio.resume()`), satisfying mobile autoplay rules.

@@ -62,7 +62,7 @@ free of canvas/DOM access so it can be unit-tested directly.
 
 ## Core mechanics
 
-- **World**: a large bounded **circular arena**, larger than the viewport. The border is
+- **World**: a large bounded **rectangular arena**, larger than the viewport. The border is
   **always deadly** — a snake dies the instant its head crosses it, on every difficulty.
   The camera follows the player's head.
 - **Food & growth**: food is scattered across the world. Eating it increases the snake's

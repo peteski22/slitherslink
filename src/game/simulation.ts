@@ -1,8 +1,8 @@
 import { vec, distance, rotateToward, type Vec2 } from '../math/vec2';
-import type { GameState, InputState, Snake } from './types';
+import type { GameState, InputState, Snake, World } from './types';
 import type { Difficulty, DifficultySettings } from '../config/difficulty';
 import { DIFFICULTIES } from '../config/difficulty';
-import { createSnake, stepSnake } from './snake';
+import { createSnake, stepSnake, snakeRadius } from './snake';
 import { tryEat, attractFood, burstFromSnake, replenishFood, randomWorldPoint } from './food';
 import { headHitsSnake, headOutsideBorder } from './collision';
 import { decideHeading, decideBoost } from './bots';
@@ -83,6 +83,23 @@ export function createGame(
 }
 
 /**
+ * Keep an invulnerable snake's head inside the arena so it slides along the wall instead of
+ * leaving. Clamps the authoritative path head and the rendered head to the inner edge.
+ */
+function clampHeadInside(s: Snake, world: World): void {
+  const r = snakeRadius(s);
+  const maxX = world.width / 2 - r;
+  const maxY = world.height / 2 - r;
+  const h = s.path[0];
+  const cx = Math.max(-maxX, Math.min(maxX, h.x));
+  const cy = Math.max(-maxY, Math.min(maxY, h.y));
+  if (cx !== h.x || cy !== h.y) {
+    s.path[0] = { x: cx, y: cy };
+    s.segments[0] = { x: cx, y: cy };
+  }
+}
+
+/**
  * Drop a fresh (small) player into the EXISTING world — bots and food are untouched, so
  * enemies keep their sizes. Used for "continue/respawn" after death (vs. a full restart).
  */
@@ -159,7 +176,11 @@ export function update(
   // 4) Collisions. The border is ALWAYS deadly (every difficulty); then body hits.
   // Snakes inside their spawn-grace window are invulnerable (skip them as victims).
   for (const s of state.snakes) {
-    if (!s.alive || s.spawnGraceTicks > 0) continue;
+    if (!s.alive) continue;
+    if (s.spawnGraceTicks > 0) {
+      clampHeadInside(s, state.world); // invulnerable: can't leave — slide along the wall
+      continue;
+    }
     if (headOutsideBorder(s, state.world)) {
       s.alive = false;
       burstFromSnake(state, s);

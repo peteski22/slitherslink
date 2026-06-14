@@ -1,17 +1,18 @@
 // All tunable gameplay numbers live here so balancing is a one-file change.
 
 // Body shape
-export const SEGMENT_SPACING = 6;     // world units between body points
+export const SEGMENT_SPACING = 14;    // world units between body points (spaced but still overlapping)
 export const START_SEGMENTS = 8;      // body points at spawn
 export const BASE_RADIUS = 9;         // segment radius (px world units) at mass 0
 export const GIRTH_FACTOR = 1.3;      // radius added per sqrt(mass)
 export const MASS_PER_SEGMENT = 4;    // mass needed to add one body point
 
 // Movement (same rules for every snake on every difficulty)
-export const WORLD_RADIUS = 1900;     // arena radius — identical on all difficulties
-export const BASE_SPEED = 120;        // world units/sec for every snake
-export const TURN_RATE = 3.2;         // player max turn (rad/sec)
-export const BOT_TURN_RATE = 2.6;     // bot max turn (rad/sec)
+export const WORLD_WIDTH = 4200;      // rectangular arena width (landscape) — identical on all difficulties
+export const WORLD_HEIGHT = 2800;     // rectangular arena height
+export const BASE_SPEED = 150;        // world units/sec for every snake
+export const TURN_RATE = 8.0;         // player max turn (rad/sec) — very tight; can loop on itself
+export const BOT_TURN_RATE = 7.0;     // bot max turn (rad/sec)
 
 // Growth / food
 export const START_MASS = 12;

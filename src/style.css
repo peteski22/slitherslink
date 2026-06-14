@@ -9,3 +9,28 @@ body {
 #hud, #screens { position: fixed; inset: 0; pointer-events: none; }
 #hud > *, #screens > * { pointer-events: auto; }
 .hidden { display: none !important; }
+
+/* HUD */
+.score-pill {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.45); color: #fff; padding: 6px 16px;
+  border-radius: 999px; font-weight: 700; font-size: 16px; white-space: nowrap;
+}
+.leaderboard {
+  position: fixed; top: 12px; right: 12px; min-width: 160px;
+  background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(4px);
+  border-radius: 10px; padding: 8px 10px; font-size: 14px; line-height: 1.7; color: #2a2333;
+}
+.leaderboard h4 { font-size: 13px; border-bottom: 1px solid rgba(0, 0, 0, 0.15); margin-bottom: 4px; }
+.leaderboard .you { color: #d2447a; font-weight: 800; }
+.king-flash {
+  position: fixed; top: 28%; left: 50%; transform: translateX(-50%);
+  font-size: 40px; font-weight: 900; color: #ffd23f; text-shadow: 0 2px 0 #b97e00;
+  animation: kingpop 1.6s ease forwards; pointer-events: none;
+}
+@keyframes kingpop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}

@@ -19,6 +19,7 @@ export class Hud {
     this.root = mount;
     this.root.innerHTML = `
       <input class="name-input" id="hud-name" maxlength="14" placeholder="name" aria-label="Snake name" />
+      <button class="mute-btn" id="hud-mute" aria-label="Toggle sound">🔊</button>
       <div class="score-pill" id="hud-score"></div>
       <div class="leaderboard">
         <h4>Leaderboard</h4>
@@ -34,6 +35,15 @@ export class Hud {
     const input = this.root.querySelector('#hud-name') as HTMLInputElement;
     input.value = initial;
     input.addEventListener('input', () => onChange(input.value.trim() || 'You'));
+  }
+
+  /** Wire the mute button: shows the icon for `muted` and calls `onToggle` with the new state. */
+  bindMute(muted: boolean, onToggle: (muted: boolean) => void): void {
+    const btn = this.root.querySelector('#hud-mute') as HTMLButtonElement;
+    let m = muted;
+    const render = () => { btn.textContent = m ? '🔇' : '🔊'; };
+    render();
+    btn.addEventListener('click', () => { m = !m; render(); onToggle(m); });
   }
 
   update(state: GameState, playerId: string, best: number): void {

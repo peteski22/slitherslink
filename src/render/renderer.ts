@@ -2,6 +2,7 @@ import type { GameState } from '../game/types';
 import type { Camera } from './camera';
 import { worldToScreen } from './camera';
 import { drawSnake } from '../skins/skins';
+import { snakeRadius } from '../game/snake';
 import { kingId } from '../game/leaderboard';
 
 export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): void {
@@ -52,5 +53,22 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   for (const s of ordered) {
     if (!s.alive) continue;
     drawSnake(ctx, s, cam, s.id === king);
+  }
+
+  // name plates above each snake's head (yours highlighted), drawn on top of all snakes
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.font = '600 14px system-ui, -apple-system, sans-serif';
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  for (const s of ordered) {
+    if (!s.alive) continue;
+    const h = worldToScreen(cam, s.segments[0]);
+    if (h.x < -80 || h.y < -40 || h.x > width + 80 || h.y > height + 40) continue;
+    const y = h.y - snakeRadius(s) * cam.zoom - 6;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillStyle = s.isPlayer ? '#ffe600' : '#ffffff';
+    ctx.strokeText(s.name, h.x, y);
+    ctx.fillText(s.name, h.x, y);
   }
 }

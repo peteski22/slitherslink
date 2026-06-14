@@ -155,10 +155,10 @@ the real snake.io, chosen by the player in settings (and remembered):
   snake.io-style set. Selectable in settings. The player always picks their own skin from
   the roster regardless of edition.
 
-The **player's** spawn presentation — grow-out from a single point with an accelerating
-head-to-tail invulnerability pulse (~5s) — is part of the core look and is not themed away.
-Enemy snakes are already in the arena at full length: they do not grow out and have no
-spawn invulnerability (a newly respawned enemy simply appears).
+All snakes **grow out** from a single spawn point (so none pops in at full length in front
+of others and causes accidental kills). **Only the player** also gets the accelerating
+head-to-tail **invulnerability pulse** (~5s); enemy snakes grow out with no invulnerability.
+This spawn presentation is part of the core look and is not themed away.
 
 ## Persistence
 

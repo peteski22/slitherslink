@@ -7,6 +7,7 @@ import {
 
 export function makeFood(state: GameState, pos: Vec2, value: number, big: boolean): Food {
   const f: Food = { id: state.nextFoodId++, pos, value, big };
+  state.food.push(f);
   return f;
 }
 
@@ -32,7 +33,7 @@ export function burstFromSnake(state: GameState, s: Snake): void {
     acc += DEATH_FOOD_SPACING;
     if (acc >= DEATH_FOOD_SPACING) {
       acc = 0;
-      state.food.push(makeFood(state, { ...s.segments[i] }, DEATH_FOOD_VALUE, true));
+      makeFood(state, { ...s.segments[i] }, DEATH_FOOD_VALUE, true);
     }
   }
 }
@@ -54,6 +55,6 @@ export function replenishFood(state: GameState, rng: () => number): void {
   const target = targetFoodCount(state.world);
   const ambient = state.food.filter((f) => !f.big).length;
   for (let i = ambient; i < target; i++) {
-    state.food.push(makeFood(state, randomWorldPoint(state.world, rng), 1, false));
+    makeFood(state, randomWorldPoint(state.world, rng), 1, false);
   }
 }

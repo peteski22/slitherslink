@@ -23,7 +23,7 @@ describe('food', () => {
     const st = blankState();
     const s = createSnake({ id: 'p', name: 'You', isPlayer: true, skinId: 'pink', pos: vec(0, 0), heading: 0 });
     st.snakes.push(s);
-    st.food.push(makeFood(st, vec(2, 0), 5, false)); // very close to head
+    makeFood(st, vec(2, 0), 5, false); // very close to head
     const massBefore = s.mass;
     tryEat(st, s);
     expect(st.food.length).toBe(0);
@@ -34,7 +34,7 @@ describe('food', () => {
     const st = blankState();
     const s = createSnake({ id: 'p', name: 'You', isPlayer: true, skinId: 'pink', pos: vec(0, 0), heading: 0 });
     st.snakes.push(s);
-    st.food.push(makeFood(st, vec(500, 0), 5, false));
+    makeFood(st, vec(500, 0), 5, false);
     tryEat(st, s);
     expect(st.food.length).toBe(1);
   });

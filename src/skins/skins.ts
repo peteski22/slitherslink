@@ -2,6 +2,7 @@ import type { Snake } from '../game/types';
 import type { Camera } from '../render/camera';
 import { worldToScreen } from '../render/camera';
 import { snakeRadius } from '../game/snake';
+import { SPAWN_GRACE_TICKS } from '../game/constants';
 
 export interface Skin {
   id: string;
@@ -36,6 +37,15 @@ export function drawSnake(
 ): void {
   const skin = getSkin(s.skinId);
   const r = snakeRadius(s) * cam.zoom;
+
+  // Spawn invulnerability: flash translucent, and flash faster as the timer runs out so
+  // the player gets a "get ready" cue before becoming vulnerable.
+  if (s.spawnGraceTicks > 0) {
+    const frac = s.spawnGraceTicks / SPAWN_GRACE_TICKS; // 1 -> 0 as grace runs out
+    const period = 6 + Math.round(frac * 20);           // ~26 ticks (slow) -> ~6 ticks (fast)
+    const elapsed = SPAWN_GRACE_TICKS - s.spawnGraceTicks;
+    ctx.globalAlpha = elapsed % period < period / 2 ? 1 : 0.3;
+  }
 
   // body
   for (let i = s.segments.length - 1; i >= 0; i--) {
@@ -106,4 +116,6 @@ export function drawSnake(
     ctx.fill();
     ctx.stroke();
   }
+
+  ctx.globalAlpha = 1; // reset in case spawn-grace made the snake translucent
 }

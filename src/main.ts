@@ -40,6 +40,7 @@ function frame(now: number) {
   last = now;
   const input = controls.read();
   while (acc >= FIXED_DT) {
+    if (player.spawnGraceTicks > 0) player.spawnGraceTicks--; // count down spawn invulnerability
     if (input.steerAngle !== null) {
       player.heading = rotateToward(player.heading, input.steerAngle, TURN_RATE * FIXED_DT);
     }

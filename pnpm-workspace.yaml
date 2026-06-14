@@ -1,0 +1,4 @@
+# esbuild (a transitive dep of vite/vitest) needs its install script to build its
+# native binary. pnpm blocks build scripts by default; allow this one explicitly.
+allowBuilds:
+  esbuild: true

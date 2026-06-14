@@ -77,6 +77,8 @@ free of canvas/DOM access so it can be unit-tested directly.
   with their aggression/cunning (see difficulty).
 - **Collisions & death**:
   - A snake dies if its **head** strikes **another snake's body** or the deadly border.
+    Only the head's **forward cone** (~150°) is deadly, so you can swerve in front of and
+    cut off rivals without dying from side or rear contact.
   - A snake may freely cross its **own** body — there is no self-collision (snake.io-style).
   - Head-to-body is one-directional: steer so rivals crash into *your* body to kill them.
   - A dead snake **bursts into glowing pellets coloured to that snake** (so it's clear whose
@@ -153,8 +155,10 @@ the real snake.io, chosen by the player in settings (and remembered):
   snake.io-style set. Selectable in settings. The player always picks their own skin from
   the roster regardless of edition.
 
-The spawn presentation — grow-out from a point with the accelerating head-to-tail
-invulnerability pulse — is part of the core look and is not themed away.
+The **player's** spawn presentation — grow-out from a single point with an accelerating
+head-to-tail invulnerability pulse (~5s) — is part of the core look and is not themed away.
+Enemy snakes are already in the arena at full length: they do not grow out and have no
+spawn invulnerability (a newly respawned enemy simply appears).
 
 ## Persistence
 
@@ -183,4 +187,6 @@ no backend is required.
 ## Open questions / future ideas (out of scope for v1)
 
 - Optional score-milestone skin unlocks for added replay motivation.
+- **Revive on death** (vs. restart): the snake re-emerges from a single spot and grows
+  out to its previous length, so you keep your size instead of starting over.
 - Additional game modes.yeah f

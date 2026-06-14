@@ -10,6 +10,33 @@
 
 ---
 
+## Status — milestone 2026-06-14
+
+**Playable now (Checkpoint B):** open `pnpm dev` → a full single-player core runs — drive with
+the mouse (mouse mode) or touch, eat scattered food to grow longer & fatter, boost (click) to
+shed mass into a trail, AI bots roam/seek/boost, kill rivals by making them hit your body,
+die on the red border or another snake's body (forward-cone only), instant restart on death.
+40/40 unit tests pass; `pnpm exec tsc --noEmit` is clean.
+
+**Done:** Task 0 scaffold (pnpm) · Tasks 1–10 core modules · Tasks 12–13 skins/renderer ·
+Task 14 controls · Checkpoints A & B (playable `main.ts`).
+
+**Remaining:** Task 11 persistence · Task 15 HUD + start/game-over/**settings** screens
+(background-theme & enemy-edition toggles) · Task 16 audio · Task 17 final wire (start screen,
+HUD, game-over, audio) · Task 18 PWA · Task 19 install on iPad. Plus the future **Revive on
+death** option (see spec).
+
+> **IMPORTANT — source of truth.** During implementation the game was tuned heavily through
+> live playtesting (turn rate, spacing, growth that drags a section out of the tail, food
+> magnetism, coloured death food, forward-cone collisions, edge-touch border death,
+> player-only spawn invulnerability with a head→tail pulse, safe spawn spacing, etc.). The
+> **committed code under `src/` is authoritative** for the built modules; the per-task code
+> blocks below reflect the original plan and may differ in detail. The **design spec**
+> (`docs/superpowers/specs/2026-06-14-snake-game-design.md`) captures the current intended
+> behavior. The constants block in Task 2 has been re-synced to the shipped values.
+
+---
+
 ## File Structure
 
 ```
@@ -532,7 +559,7 @@ No test (pure declarations). These are consumed and thereby exercised by later t
 // All tunable gameplay numbers live here so balancing is a one-file change.
 
 // Body shape
-export const SEGMENT_SPACING = 17;    // world units between body points (spaced but still overlapping)
+export const SEGMENT_SPACING = 21;    // world units between body points (spaced but still overlapping)
 export const START_SEGMENTS = 8;      // body points at spawn
 export const BASE_RADIUS = 9;         // segment radius (px world units) at mass 0
 export const GIRTH_FACTOR = 1.3;      // radius added per sqrt(mass)
@@ -541,7 +568,7 @@ export const MASS_PER_SEGMENT = 4;    // mass needed to add one body point
 // Movement (same rules for every snake on every difficulty)
 export const WORLD_WIDTH = 4200;      // rectangular arena width (landscape) — identical on all difficulties
 export const WORLD_HEIGHT = 2800;     // rectangular arena height
-export const BASE_SPEED = 150;        // world units/sec for every snake
+export const BASE_SPEED = 175;        // world units/sec for every snake
 export const TURN_RATE = 8.0;         // player max turn (rad/sec) — very tight; can loop on itself
 export const BOT_TURN_RATE = 7.0;     // bot max turn (rad/sec)
 
@@ -550,14 +577,22 @@ export const START_MASS = 12;
 export const FOOD_RADIUS = 5;
 export const FOOD_VALUE = 1;          // mass per normal pellet
 export const FOOD_DENSITY = 0.00009;  // target pellets per world unit^2
-export const DEATH_FOOD_SPACING = 14; // gap between pellets dropped by a dead snake
-export const DEATH_FOOD_VALUE = 2;    // mass per death pellet (glowing/big)
+export const DEATH_FOOD_SPACING = 34; // arc-length gap between pellets dropped by a dead snake
+export const DEATH_FOOD_VALUE = 3;    // mass per death pellet (glowing/big)
+
+// Food magnetism (pellets get sucked toward a nearby head)
+export const FOOD_MAGNET_RANGE = 12;  // world units beyond the head radius that pulls food in (only when very close)
+export const FOOD_MAGNET_SPEED = 140; // world units/sec a pulled pellet drifts toward the head (gentle)
 
 // Boost
 export const MIN_BOOST_MASS = 12;     // = START_MASS; can't boost once shrunk to the starting size
 export const BOOST_DRAIN = 6;         // mass/sec lost while boosting
 export const BOOST_MULTIPLIER = 1.8;  // speed multiplier while boosting
 export const BOOST_DROP_INTERVAL = 0.15; // seconds between dropped pellets while boosting
+
+// Spawn
+export const SPAWN_GRACE_TICKS = 300;   // ~5s player invulnerability at spawn (60fps) while the body grows out
+export const MIN_SPAWN_DISTANCE = 350;  // a new snake must spawn at least this far from every living snake's head
 ```
 
 - [ ] **Step 2: Create `src/game/types.ts`**

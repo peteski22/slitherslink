@@ -1019,7 +1019,7 @@ git commit -m "feat: add food field, eating, and death-burst"
 // src/game/collision.test.ts
 import { describe, it, expect } from 'vitest';
 import { vec } from '../math/vec2';
-import { createSnake } from './snake';
+import { createSnake, stepSnake } from './snake';
 import { headHitsSnake, headOutsideBorder } from './collision';
 
 describe('collision', () => {
@@ -1036,8 +1036,10 @@ describe('collision', () => {
     expect(headHitsSnake(a, b)).toBe(false);
   });
 
-  it('does not flag a snake colliding with its own neck', () => {
+  it('does not flag an extended snake colliding with its own straight neck', () => {
     const a = createSnake({ id: 'a', name: 'A', isPlayer: true, skinId: 'pink', pos: vec(0, 0), heading: 0 });
+    // Snakes spawn collapsed at a point; move straight so the body extends behind the head.
+    for (let i = 0; i < 100; i++) stepSnake(a, 120, 1 / 60);
     expect(headHitsSnake(a, a)).toBe(false);
   });
 

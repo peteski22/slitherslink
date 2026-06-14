@@ -7,8 +7,10 @@ export interface Snake {
   name: string;
   isPlayer: boolean;
   skinId: string;
-  /** segments[0] is the head; subsequent points trail the head. */
+  /** segments[0] is the head; subsequent points trail the head (resampled from `path`). */
   segments: Vec2[];
+  /** Dense trail of recent head positions (head-first); the body is sampled along it. */
+  path: Vec2[];
   heading: number; // radians, current facing
   mass: number;    // drives both length (segment count) and girth (radius)
   boosting: boolean;

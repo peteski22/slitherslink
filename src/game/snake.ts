@@ -1,4 +1,4 @@
-import { Vec2, vec, add, sub, scale, length, normalize, fromAngle } from '../math/vec2';
+import { Vec2, add, scale, distance, fromAngle } from '../math/vec2';
 import type { Snake } from './types';
 import {
   SEGMENT_SPACING, START_SEGMENTS, BASE_RADIUS, GIRTH_FACTOR,
@@ -26,17 +26,16 @@ export function desiredSegments(mass: number): number {
 }
 
 export function createSnake(p: CreateSnakeParams): Snake {
-  // Start collapsed at the spawn point; the body "grows out" as the head moves away.
+  // Start collapsed at the spawn point; the body "grows out" as the head lays down a path.
   const segments: Vec2[] = [];
-  for (let i = 0; i < START_SEGMENTS; i++) {
-    segments.push({ ...p.pos });
-  }
+  for (let i = 0; i < START_SEGMENTS; i++) segments.push({ ...p.pos });
   return {
     id: p.id,
     name: p.name,
     isPlayer: p.isPlayer,
     skinId: p.skinId,
     segments,
+    path: [{ ...p.pos }],
     heading: p.heading,
     mass: START_MASS,
     boosting: false,
@@ -46,30 +45,60 @@ export function createSnake(p: CreateSnakeParams): Snake {
   };
 }
 
-/** Advance the head by speed*dt along `heading`, then drag each body point to keep spacing. */
-export function stepSnake(s: Snake, speed: number, dt: number): void {
-  const dir = fromAngle(s.heading);
-  s.segments[0] = add(s.segments[0], scale(dir, speed * dt));
-  for (let i = 1; i < s.segments.length; i++) {
-    const ahead = s.segments[i - 1];
-    const cur = s.segments[i];
-    const d = sub(ahead, cur);
-    const dist = length(d);
-    if (dist > SEGMENT_SPACING) {
-      s.segments[i] = add(cur, scale(normalize(d), dist - SEGMENT_SPACING));
+/**
+ * Place the body markers along the head's path at fixed arc-length intervals.
+ * NOTE: the marker count is owned by applyGrowth; this only positions them.
+ * Because every marker advances along the real path each frame, the tail always
+ * keeps moving — even when the head loops back on itself.
+ */
+function resampleBody(s: Snake): void {
+  const want = s.segments.length;
+  const out: Vec2[] = [{ ...s.path[0] }]; // head
+  let targetDist = SEGMENT_SPACING;
+  let traveled = 0;
+  for (let i = 1; i < s.path.length && out.length < want; i++) {
+    const a = s.path[i - 1];
+    const b = s.path[i];
+    const segLen = distance(a, b);
+    while (out.length < want && segLen > 0 && traveled + segLen >= targetDist) {
+      const t = (targetDist - traveled) / segLen;
+      out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+      targetDist += SEGMENT_SPACING;
+    }
+    traveled += segLen;
+  }
+  // Young/short path: remaining markers stay stacked at the path's end (the grow-out effect).
+  const tail = s.path[s.path.length - 1];
+  while (out.length < want) out.push({ ...tail });
+  s.segments = out;
+}
+
+/** Keep the path only as long as needed to position the whole body. */
+function trimPath(s: Snake): void {
+  const maxArc = s.segments.length * SEGMENT_SPACING + SEGMENT_SPACING;
+  let arc = 0;
+  for (let i = 1; i < s.path.length; i++) {
+    arc += distance(s.path[i - 1], s.path[i]);
+    if (arc >= maxArc) {
+      s.path.length = i + 1;
+      return;
     }
   }
 }
 
-/** Reconcile body-point count with current mass (append at tail / trim from tail). */
+/** Advance the head by speed*dt along `heading`, extend the path, and resample the body. */
+export function stepSnake(s: Snake, speed: number, dt: number): void {
+  const dir = fromAngle(s.heading);
+  s.path.unshift(add(s.path[0], scale(dir, speed * dt)));
+  resampleBody(s);
+  trimPath(s);
+}
+
+/** Reconcile body-marker count with current mass (append/trim at the tail). */
 export function applyGrowth(s: Snake): void {
   const want = desiredSegments(s.mass);
   while (s.segments.length < want) {
-    const tail = s.segments[s.segments.length - 1];
-    const prev = s.segments[s.segments.length - 2] ?? add(tail, vec(SEGMENT_SPACING, 0));
-    // new point continues the tail direction
-    const back = normalize(sub(tail, prev));
-    s.segments.push(add(tail, scale(back, SEGMENT_SPACING)));
+    s.segments.push({ ...s.segments[s.segments.length - 1] });
   }
   while (s.segments.length > want && s.segments.length > 2) {
     s.segments.pop();

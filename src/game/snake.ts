@@ -1,4 +1,4 @@
-import { Vec2, add, scale, distance, fromAngle } from '../math/vec2';
+import { Vec2, add, sub, scale, distance, fromAngle } from '../math/vec2';
 import type { Snake } from './types';
 import {
   SEGMENT_SPACING, START_SEGMENTS, BASE_RADIUS, GIRTH_FACTOR,
@@ -19,32 +19,33 @@ export function radiusForMass(mass: number): number {
   return BASE_RADIUS + Math.sqrt(Math.max(0, mass)) * GIRTH_FACTOR;
 }
 
-/** How many body points a snake should have at a given mass. */
+/** How many body sections a snake should have at a given mass (whole sections). */
 export function desiredSegments(mass: number): number {
   const extra = Math.floor((mass - START_MASS) / MASS_PER_SEGMENT);
   return Math.max(START_SEGMENTS, START_SEGMENTS + extra);
 }
 
-/**
- * Continuous body length (world units) for a given mass; grows smoothly so a new section
- * drags out of the tail as the snake moves rather than popping in at full length.
- */
-export function bodyLengthForMass(mass: number): number {
-  const extra = Math.max(0, (mass - START_MASS) / MASS_PER_SEGMENT);
-  return (START_SEGMENTS - 1 + extra) * SEGMENT_SPACING;
-}
-
 export function createSnake(p: CreateSnakeParams): Snake {
-  // Start collapsed at the spawn point; the body "grows out" as the head lays down a path.
   const segments: Vec2[] = [];
-  for (let i = 0; i < START_SEGMENTS; i++) segments.push({ ...p.pos });
+  let path: Vec2[];
+  if (p.isPlayer) {
+    // The player starts collapsed at the spawn point and "grows out" as the head moves.
+    for (let i = 0; i < START_SEGMENTS; i++) segments.push({ ...p.pos });
+    path = [{ ...p.pos }];
+  } else {
+    // Enemies are already in the arena, laid out full-length behind their head.
+    const dir = fromAngle(p.heading);
+    for (let i = 0; i < START_SEGMENTS; i++) segments.push(sub(p.pos, scale(dir, i * SEGMENT_SPACING)));
+    path = [];
+    for (let i = 0; i <= START_SEGMENTS; i++) path.push(sub(p.pos, scale(dir, i * SEGMENT_SPACING)));
+  }
   return {
     id: p.id,
     name: p.name,
     isPlayer: p.isPlayer,
     skinId: p.skinId,
     segments,
-    path: [{ ...p.pos }],
+    path,
     heading: p.heading,
     mass: START_MASS,
     boosting: false,
@@ -55,42 +56,35 @@ export function createSnake(p: CreateSnakeParams): Snake {
 }
 
 /**
- * Place the body markers along the head's path; the body length comes from mass, so the
- * marker count grows smoothly and the tail drags out as the snake grows.
- * Because every marker advances along the real path each frame, the tail always keeps
- * moving — even when the head loops back on itself.
+ * Place the body sections along the head's path at fixed SEGMENT_SPACING intervals; the
+ * section count comes from mass (whole sections). Because every section advances along the
+ * real path each frame, the tail always keeps moving — even when the head loops back.
  */
 function resampleBody(s: Snake): void {
-  // Marker distances back from the head: full SEGMENT_SPACING steps plus a final partial
-  // marker at the exact body length, so the tail drags out smoothly as the body grows.
-  const targetArc = bodyLengthForMass(s.mass);
-  const targets: number[] = [];
-  for (let d = SEGMENT_SPACING; d < targetArc - 0.001; d += SEGMENT_SPACING) targets.push(d);
-  targets.push(targetArc);
-
+  const want = desiredSegments(s.mass); // whole sections; a new section is added at once
   const out: Vec2[] = [{ ...s.path[0] }]; // head
+  let targetDist = SEGMENT_SPACING;
   let traveled = 0;
-  let ti = 0;
-  for (let i = 1; i < s.path.length && ti < targets.length; i++) {
+  for (let i = 1; i < s.path.length && out.length < want; i++) {
     const a = s.path[i - 1];
     const b = s.path[i];
     const segLen = distance(a, b);
-    while (ti < targets.length && traveled + segLen >= targets[ti]) {
-      const t = segLen > 0 ? (targets[ti] - traveled) / segLen : 0;
+    while (out.length < want && traveled + segLen >= targetDist) {
+      const t = segLen > 0 ? (targetDist - traveled) / segLen : 0;
       out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
-      ti++;
+      targetDist += SEGMENT_SPACING;
     }
     traveled += segLen;
   }
-  // Young/short path: remaining markers stay stacked at the path's end (the grow-out effect).
+  // Young/short path (player growing out): remaining sections stay stacked at the path's end.
   const tail = s.path[s.path.length - 1];
-  while (ti < targets.length) { out.push({ ...tail }); ti++; }
+  while (out.length < want) out.push({ ...tail });
   s.segments = out;
 }
 
 /** Keep the path only as long as needed to position the whole body. */
 function trimPath(s: Snake): void {
-  const maxArc = bodyLengthForMass(s.mass) + SEGMENT_SPACING;
+  const maxArc = desiredSegments(s.mass) * SEGMENT_SPACING + SEGMENT_SPACING;
   let arc = 0;
   for (let i = 1; i < s.path.length; i++) {
     arc += distance(s.path[i - 1], s.path[i]);

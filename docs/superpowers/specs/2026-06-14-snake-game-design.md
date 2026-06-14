@@ -67,7 +67,9 @@ free of canvas/DOM access so it can be unit-tested directly.
   The camera follows the player's head.
 - **Food & growth**: food is scattered across the world. Eating it increases the snake's
   **mass**. Mass drives **both length and segment radius**, so the snake grows longer *and*
-  fatter — a defining snake.io visual. A maxed snake should feel huge and dominant.
+  fatter — a defining snake.io visual. A maxed snake should feel huge and dominant. Nearby
+  food is **magnetised toward the head** (sucked in) as the snake passes, with a little
+  forgiveness on the eat radius.
 - **Boost**: holding the boost button gives a speed burst that steadily **sheds mass**
   (dropping food behind the snake). Risk/reward: catch a rival or escape, at the cost of
   size. **Bots boost too** — to reach food first or to cut the player off — so the speed
@@ -75,9 +77,11 @@ free of canvas/DOM access so it can be unit-tested directly.
   with their aggression/cunning (see difficulty).
 - **Collisions & death**:
   - A snake dies if its **head** strikes **another snake's body** or the deadly border.
+  - A snake may freely cross its **own** body — there is no self-collision (snake.io-style).
   - Head-to-body is one-directional: steer so rivals crash into *your* body to kill them.
-  - A dead snake **bursts into a line of glowing food** along its former body, which any
-    snake can rush to eat — the big growth moments.
+  - A dead snake **bursts into glowing pellets coloured to that snake** (so it's clear whose
+    remains they are), spaced along its former body and **worth more than ambient food** —
+    the big growth moments.
 - **Scoring**: score = snake length/mass (no hard win condition; it's score-chasing like
   the real game). **Best score is saved locally** and shown on the HUD and game-over screen.
 - **King of the board**: whoever holds **rank #1** on the leaderboard is "the King" and

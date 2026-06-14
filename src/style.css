@@ -31,6 +31,16 @@ body {
   background: rgba(0, 0, 0, 0.45); color: #fff; font-size: 14px; font-weight: 700;
 }
 .name-input::placeholder { color: rgba(255, 255, 255, 0.6); font-weight: 500; }
+.mute-btn {
+  position: fixed; top: 12px; left: 156px; width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  border: none; border-radius: 50%; cursor: pointer;
+  background: rgba(255, 255, 255, 0.16); color: #fff;
+  font-size: 17px; line-height: 1;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.mute-btn:hover { background: rgba(255, 255, 255, 0.3); }
+.mute-btn:active { transform: scale(0.92); }
 .king-flash {
   position: fixed; top: 28%; left: 50%; transform: translateX(-50%);
   font-size: 40px; font-weight: 900; color: #ffd23f; text-shadow: 0 2px 0 #b97e00;

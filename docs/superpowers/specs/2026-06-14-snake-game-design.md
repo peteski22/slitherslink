@@ -88,8 +88,8 @@ free of canvas/DOM access so it can be unit-tested directly.
   (which shrinks you) never costs score. Points come from **eating pellets** (a dead snake's
   body pellets are worth more) and **kills**. No hard win condition — it's score-chasing like
   the real game. **Best score is saved locally** and shown on the HUD and game-over screen.
-  (Body **size** is still driven by mass; sections are spaced proportionally to girth so they
-  don't bunch up as the snake grows.)
+  (Body **size** is still driven by mass — the snake grows longer and fatter — while score
+  is separate.)
 - **King of the board**: whoever holds **rank #1** on the leaderboard is "the King" and
   wears a **crown** on their snake's head and beside their leaderboard name — player or bot.
   When the player becomes King, a brief "You're the King! 👑" flash and a subtle glow play.

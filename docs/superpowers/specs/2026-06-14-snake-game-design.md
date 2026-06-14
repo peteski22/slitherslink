@@ -138,10 +138,24 @@ moments: eating food, boosting, dying, and becoming King; a light, upbeat music 
 during play. Audio plays via the Web Audio API (started on first user interaction, per
 mobile autoplay rules) and there is a **mute toggle** (state remembered between sessions).
 
+## Settings & theming
+
+The game supports two visual **editions** so it can look like our friendly version or evoke
+the real snake.io, chosen by the player in settings (and remembered):
+
+- **Background theme**: "Ours" (bright Cute & Candy playfield) or "snake.io" (teal field with
+  a faint hex pattern). Selectable in settings.
+- **Enemy-skin edition**: which skin set the AI snakes use — our friendly set or a
+  snake.io-style set. Selectable in settings. The player always picks their own skin from
+  the roster regardless of edition.
+
+The spawn presentation — grow-out from a point with the accelerating head-to-tail
+invulnerability pulse — is part of the core look and is not themed away.
+
 ## Persistence
 
-`localStorage` only: best score, last-used skin, selected difficulty, mute preference. No
-accounts, no network, no analytics.
+`localStorage` only: best score, last-used skin, selected difficulty, mute preference,
+background theme, and enemy-skin edition. No accounts, no network, no analytics.
 
 ## Testing
 

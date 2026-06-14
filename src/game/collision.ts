@@ -1,4 +1,4 @@
-import { distance } from '../math/vec2';
+import { distance, sub, dot, fromAngle } from '../math/vec2';
 import type { Snake, World } from './types';
 import { snakeRadius } from './snake';
 import { SEGMENT_SPACING } from './constants';
@@ -7,7 +7,14 @@ import { SEGMENT_SPACING } from './constants';
 const SELF_SKIP = 4;
 
 /**
- * True if `attacker`'s head overlaps any body segment of `victim`.
+ * cos of the head's forward half-angle. Only body points within this cone ahead of the
+ * head are deadly, so a snake can swerve in front of / cut off others without dying from
+ * side or rear contact. ~0.25 ≈ a 75° half-angle (a ~150° frontal arc).
+ */
+const HEAD_CONE_COS = 0.25;
+
+/**
+ * True if `attacker`'s head runs into a body point of `victim` within its forward cone.
  * When attacker === victim, the first SELF_SKIP points are ignored (the neck).
  */
 export function headHitsSnake(attacker: Snake, victim: Snake): boolean {
@@ -20,8 +27,14 @@ export function headHitsSnake(attacker: Snake, victim: Snake): boolean {
     const span = victim.segments.length * SEGMENT_SPACING + snakeRadius(victim) + snakeRadius(attacker);
     if (distance(headPos, victim.segments[0]) > span) return false;
   }
+  const facing = fromAngle(attacker.heading);
   for (let i = startIndex; i < victim.segments.length; i++) {
-    if (distance(headPos, victim.segments[i]) <= hitDist) return true;
+    const seg = victim.segments[i];
+    const d = distance(headPos, seg);
+    if (d > hitDist) continue;
+    if (d < 0.0001) return true; // exactly overlapping
+    // only the head's forward cone is deadly
+    if (dot(sub(seg, headPos), facing) / d >= HEAD_CONE_COS) return true;
   }
   return false;
 }

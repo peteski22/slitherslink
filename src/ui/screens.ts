@@ -62,11 +62,11 @@ export class Screens {
       sync();
 
       this.mount.querySelector('#start-diffs')!.addEventListener('click', (e) => {
-        const d = (e.target as HTMLElement).getAttribute('data-diff');
+        const d = (e.target as HTMLElement).closest('[data-diff]')?.getAttribute('data-diff');
         if (d) { difficulty = d as Difficulty; sync(); }
       });
       this.mount.querySelector('#start-skins')!.addEventListener('click', (e) => {
-        const s = (e.target as HTMLElement).getAttribute('data-skin');
+        const s = (e.target as HTMLElement).closest('[data-skin]')?.getAttribute('data-skin');
         if (s) { skinId = s; sync(); }
       });
       this.mount.querySelector('#screen-play')!.addEventListener('click', () => {

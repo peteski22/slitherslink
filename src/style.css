@@ -49,7 +49,8 @@ body {
   background: radial-gradient(circle at 50% 35%, rgba(26, 21, 48, 0.72), rgba(26, 21, 48, 0.92));
   color: #fff; padding: 24px;
 }
-.screen-title { font-size: clamp(38px, 8vw, 76px); font-weight: 900; color: #ff5fa2; text-shadow: 0 3px 0 #b3325f; }
+.screen-title { font-size: clamp(38px, 8vw, 76px); font-weight: 900; color: #ff5fa2; text-shadow: 0 3px 0 #b3325f; line-height: 1; }
+.screen-tagline { font-size: clamp(20px, 4vw, 34px); font-weight: 800; color: #ffe600; text-shadow: 0 2px 0 #b39600; letter-spacing: 1px; margin-top: -4px; }
 .screen-sub { font-size: 18px; opacity: 0.9; }
 .screen-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .screen-hint { font-size: 13px; opacity: 0.75; line-height: 1.7; max-width: 320px; }

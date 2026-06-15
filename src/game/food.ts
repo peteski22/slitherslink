@@ -41,7 +41,9 @@ export function tryEat(state: GameState, s: Snake): void {
   for (const f of state.food) {
     if (distance(headPos, f.pos) <= reach) {
       s.mass += f.value;
-      if (f.big) {
+      if (f.owner === s.id) {
+        // re-collecting your own boost trail: reclaim mass but score nothing (no circle-farming)
+      } else if (f.big) {
         s.score += POINTS_BIG_PELLET; // score is separate from mass
         s.eatenBig++;
       } else {

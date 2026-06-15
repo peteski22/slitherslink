@@ -27,7 +27,8 @@ export interface Food {
   pos: Vec2;
   value: number;
   big: boolean;     // true for glowing pellets from dead snakes
-  color?: string;   // dead-snake pellets take the snake's colour; ambient pellets leave this unset
+  color?: string;   // dead-snake / boost pellets take the snake's colour; ambient pellets leave this unset
+  owner?: SnakeId;  // the snake that dropped it (boost trail) — re-eating your own scores nothing
 }
 
 export interface World {

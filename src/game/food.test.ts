@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { vec } from '../math/vec2';
 import { createSnake, stepSnake } from './snake';
+import { getSkin } from '../skins/skins';
 import { makeFood, tryEat, burstFromSnake, targetFoodCount } from './food';
 import type { GameState } from './types';
 import { FOOD_VALUE } from './constants';
@@ -48,7 +49,7 @@ describe('food', () => {
     const before = st.food.length;
     burstFromSnake(st, s);
     expect(st.food.length).toBeGreaterThan(before);
-    expect(st.food.every((f) => f.big && f.color === '#4dabff')).toBe(true);
+    expect(st.food.every((f) => f.big && f.color === getSkin('blue').body)).toBe(true);
   });
 
   it('targetFoodCount scales with world size', () => {

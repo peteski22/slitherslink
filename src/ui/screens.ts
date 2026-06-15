@@ -1,4 +1,5 @@
 import { DIFFICULTY_ORDER, type Difficulty } from '../config/difficulty';
+import { SKINS, getSkin, drawSkinPreview } from '../skins/skins';
 
 /** What the player chose on the game-over screen. */
 export type DeathChoice = 'respawn' | 'revive' | 'restart';
@@ -11,12 +12,6 @@ export interface StartChoices {
   mouseControl: boolean;
 }
 
-interface SkinOption {
-  id: string;
-  name: string;
-  body: string;
-}
-
 /**
  * Full-screen overlay dialogs (start + game over) drawn over the canvas. The start screen's
  * Play button doubles as the first user gesture that unlocks audio.
@@ -25,7 +20,7 @@ export class Screens {
   constructor(private mount: HTMLElement) {}
 
   /** Show the start screen with pickers; resolves with the chosen options when Play is pressed. */
-  showStart(opts: { best: number; initial: StartChoices; skins: SkinOption[] }): Promise<StartChoices> {
+  showStart(opts: { best: number; initial: StartChoices }): Promise<StartChoices> {
     return new Promise((resolve) => {
       let { skinId, difficulty } = opts.initial;
       this.mount.innerHTML = `
@@ -39,12 +34,19 @@ export class Screens {
             ${DIFFICULTY_ORDER.map((d) => `<button class="chip" data-diff="${d}">${d}</button>`).join('')}
           </div>
           <div class="start-label">Your snake</div>
-          <div class="start-row" id="start-skins">
-            ${opts.skins.map((s) => `<button class="skin-swatch" data-skin="${s.id}" style="background:${s.body}" aria-label="${s.name}"></button>`).join('')}
+          <div class="start-row start-skins" id="start-skins">
+            ${SKINS.map((s) => `<button class="skin-btn" data-skin="${s.id}" title="${s.name}" aria-label="${s.name}"><canvas width="72" height="40"></canvas></button>`).join('')}
           </div>
           <label class="start-toggle"><input type="checkbox" id="start-mouse" /> Mouse control (desktop)</label>
           <button class="btn" id="screen-play">Play</button>
         </div>`;
+
+      // Render a mini-snake preview into each skin button's canvas.
+      this.mount.querySelectorAll('#start-skins .skin-btn').forEach((btn) => {
+        const id = btn.getAttribute('data-skin');
+        const cv = btn.querySelector('canvas') as HTMLCanvasElement | null;
+        if (id && cv) drawSkinPreview(cv.getContext('2d')!, getSkin(id));
+      });
 
       const nameEl = this.mount.querySelector('#start-name') as HTMLInputElement;
       nameEl.value = opts.initial.name;

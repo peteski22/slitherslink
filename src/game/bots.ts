@@ -1,11 +1,10 @@
-import { Vec2, sub, add, scale, distance, angleOf, fromAngle } from '../math/vec2';
+import { Vec2, sub, add, scale, distance, dot, angleOf, fromAngle } from '../math/vec2';
 import type { GameState, Snake } from './types';
 import type { DifficultySettings } from '../config/difficulty';
 import { snakeRadius } from './snake';
 import { MIN_BOOST_MASS } from './constants';
 
 const BORDER_LOOKAHEAD = 160; // start turning inward within this distance of the border
-const AVOID_LOOKAHEAD = 90;   // distance ahead to check for other bodies
 
 /**
  * Decide the heading a bot wants this frame. Priority: avoid the border, avoid
@@ -27,27 +26,26 @@ export function decideHeading(
     return angleOf(scale(headPos, -1)); // point back toward (0,0)
   }
 
-  // 2) Body avoidance: if a foreign body point is close ahead, veer away from it.
-  // Look-ahead scales with cunning: low-cunning (easy) bots see less and crash more.
-  const lookahead = AVOID_LOOKAHEAD * (0.4 + settings.cunning);
-  const ahead = add(headPos, scale(fromAngle(bot.heading), lookahead));
+  // 2) Body avoidance (self-preservation): if another snake's body is close *ahead*, veer
+  // away. Danger range scales with cunning, so smarter bots dodge earlier (less kamikaze).
+  const dir = fromAngle(bot.heading);
+  const danger = snakeRadius(bot) + 30 + 80 * settings.cunning;
   let threat: Vec2 | null = null;
   let threatDist = Infinity;
   for (const other of state.snakes) {
     if (!other.alive) continue;
-    const startIndex = other === bot ? 6 : 0;
+    const startIndex = other === bot ? 6 : 0; // ignore our own neck
     for (let i = startIndex; i < other.segments.length; i += 2) {
-      const d = distance(ahead, other.segments[i]);
-      if (d < snakeRadius(bot) + snakeRadius(other) && d < threatDist) {
-        threat = other.segments[i];
+      const seg = other.segments[i];
+      const to = sub(seg, headPos);
+      const d = distance(headPos, seg);
+      if (d < danger && d < threatDist && dot(to, dir) > 0) { // only obstacles ahead of us
         threatDist = d;
+        threat = seg;
       }
     }
   }
-  if (threat) {
-    const away = sub(headPos, threat);
-    return angleOf(away);
-  }
+  if (threat) return angleOf(sub(headPos, threat)); // steer away from the obstacle
 
   // 3) Hunt — every snake for itself: chase the nearest *smaller* snake (player OR bot),
   // not the player specifically, so high difficulty isn't everyone ganging up on the player.
@@ -67,14 +65,19 @@ export function decideHeading(
     }
   }
 
-  // 4) Seek nearest food.
-  let nearest: Vec2 | null = null;
-  let best = Infinity;
+  // 4) Seek food — prefer a nearby big (dead-snake) pellet; it's worth more, so rush the
+  // remains when a snake dies. Otherwise head for the nearest pellet of any kind.
+  let bigGoal: Vec2 | null = null;
+  let bigDist = Infinity;
+  let anyGoal: Vec2 | null = null;
+  let anyDist = Infinity;
   for (const f of state.food) {
     const d = distance(headPos, f.pos);
-    if (d < best) { best = d; nearest = f.pos; }
+    if (f.big && d < 600 && d < bigDist) { bigDist = d; bigGoal = f.pos; }
+    if (d < anyDist) { anyDist = d; anyGoal = f.pos; }
   }
-  if (nearest) return angleOf(sub(nearest, headPos));
+  const seek = bigGoal ?? anyGoal;
+  if (seek) return angleOf(sub(seek, headPos));
 
   // 5) Wander: keep current heading with a small random nudge.
   return bot.heading + (rng() - 0.5) * 0.4;

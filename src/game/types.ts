@@ -12,8 +12,10 @@ export interface Snake {
   /** Dense trail of recent head positions (head-first); the body is sampled along it. */
   path: Vec2[];
   heading: number; // radians, current facing
-  mass: number;    // drives both length (segment count) and girth (radius)
-  score: number;   // accumulated points (pellets + body pellets + kills); independent of mass
+  mass: number;        // drives both length (segment count) and girth (radius)
+  score: number;       // accumulated points (pellets + body pellets + kills); independent of mass
+  eatenPellets: number; // running count of ambient pellets eaten (drives the eat sound cue)
+  eatenBig: number;     // running count of dead-snake body pellets eaten (distinct sound cue)
   boosting: boolean;
   alive: boolean;
   boostDropTimer: number; // internal: time accumulator for boost food drops

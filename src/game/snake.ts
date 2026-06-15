@@ -54,6 +54,8 @@ export function createSnake(p: CreateSnakeParams): Snake {
     heading: p.heading,
     mass,
     score: 0,
+    eatenPellets: 0,
+    eatenBig: 0,
     boosting: false,
     alive: true,
     boostDropTimer: 0,

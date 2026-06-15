@@ -41,7 +41,13 @@ export function tryEat(state: GameState, s: Snake): void {
   for (const f of state.food) {
     if (distance(headPos, f.pos) <= reach) {
       s.mass += f.value;
-      s.score += f.big ? POINTS_BIG_PELLET : POINTS_PELLET; // score is separate from mass
+      if (f.big) {
+        s.score += POINTS_BIG_PELLET; // score is separate from mass
+        s.eatenBig++;
+      } else {
+        s.score += POINTS_PELLET;
+        s.eatenPellets++;
+      }
     } else {
       remaining.push(f);
     }

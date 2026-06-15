@@ -49,12 +49,22 @@ export function decideHeading(
     return angleOf(away);
   }
 
-  // 3) Hunt the player (aggression chance) if the player is alive and smaller.
-  const player = state.snakes.find((s) => s.isPlayer && s.alive);
-  if (player && rng() < settings.aggression && player.mass < bot.mass * 1.2) {
-    // aim slightly ahead of the player's head to cut them off
-    const lead = add(player.segments[0], scale(fromAngle(player.heading), snakeRadius(player) * 3));
-    return angleOf(sub(lead, headPos));
+  // 3) Hunt — every snake for itself: chase the nearest *smaller* snake (player OR bot),
+  // not the player specifically, so high difficulty isn't everyone ganging up on the player.
+  if (rng() < settings.aggression) {
+    let prey: Snake | null = null;
+    let preyDist = Infinity;
+    for (const other of state.snakes) {
+      if (other === bot || !other.alive) continue;
+      if (other.mass >= bot.mass * 1.2) continue; // only chase someone smaller
+      const d = distance(headPos, other.segments[0]);
+      if (d < 420 && d < preyDist) { preyDist = d; prey = other; }
+    }
+    if (prey) {
+      // aim slightly ahead of the prey's head to cut it off
+      const lead = add(prey.segments[0], scale(fromAngle(prey.heading), snakeRadius(prey) * 3));
+      return angleOf(sub(lead, headPos));
+    }
   }
 
   // 4) Seek nearest food.
@@ -84,11 +94,15 @@ export function decideBoost(
 ): boolean {
   if (bot.mass <= MIN_BOOST_MASS + 6) return false; // keep a safety buffer
 
-  const player = state.snakes.find((s) => s.isPlayer && s.alive);
-  if (player) {
-    const d = distance(bot.segments[0], player.segments[0]);
-    if (d < 220 && bot.mass > player.mass && rng() < settings.aggression) return true;
+  // boost to chase the nearest smaller snake (anyone), not the player specifically
+  let nearest: Snake | null = null;
+  let nearestDist = Infinity;
+  for (const other of state.snakes) {
+    if (other === bot || !other.alive) continue;
+    const d = distance(bot.segments[0], other.segments[0]);
+    if (d < nearestDist) { nearestDist = d; nearest = other; }
   }
+  if (nearest && nearestDist < 220 && bot.mass > nearest.mass && rng() < settings.aggression) return true;
 
   let nearestFood = Infinity;
   for (const f of state.food) {

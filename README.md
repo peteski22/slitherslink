@@ -1,7 +1,7 @@
-# 🐍 Snake
+# 🐍 Snake: Slither Slink
 
 A personal, ad-free, **offline** snake.io-style game for the family's tablets (iPad first,
-Android later). One player vs. AI bots: slither around, eat to grow longer *and* fatter,
+Android later). Intended home: **slitherslink.online**. One player vs. AI bots: slither around, eat to grow longer *and* fatter,
 boost, cut rivals off, and chase the "King" crown — with none of the ads, in-app purchases,
 or online strangers of the real thing.
 

@@ -104,14 +104,23 @@ function clampHeadInside(s: Snake, world: World): void {
  * Drop a fresh (small) player into the EXISTING world — bots and food are untouched, so
  * enemies keep their sizes. Used for "continue/respawn" after death (vs. a full restart).
  */
-export function respawnPlayer(state: GameState, rng: () => number, name = 'You', skinId?: string): void {
+export function respawnPlayer(
+  state: GameState,
+  rng: () => number,
+  name = 'You',
+  skinId?: string,
+  mass?: number,   // undefined => START_MASS (respawn); pass old mass for Revive (grows back out)
+  score = 0,       // 0 for respawn; restore the old score for Revive
+): void {
   const idx = state.snakes.findIndex((s) => s.id === PLAYER_ID);
   const old = idx >= 0 ? state.snakes[idx] : undefined;
   const fresh = createSnake({
     id: PLAYER_ID, name, isPlayer: true,
     skinId: skinId ?? old?.skinId ?? 'pink',
     pos: safeSpawnPoint(state, rng), heading: rng() * Math.PI * 2,
+    mass, // collapsed grow-out: a revived snake emerges from a point back to its old size
   });
+  fresh.score = score;
   if (idx >= 0) state.snakes[idx] = fresh;
   else state.snakes.push(fresh);
 }

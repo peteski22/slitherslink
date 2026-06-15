@@ -41,6 +41,26 @@ body {
 }
 .mute-btn:hover { background: rgba(255, 255, 255, 0.3); }
 .mute-btn:active { transform: scale(0.92); }
+
+/* Screens (start / game over) */
+.screen {
+  position: fixed; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px; text-align: center;
+  background: radial-gradient(circle at 50% 35%, rgba(26, 21, 48, 0.72), rgba(26, 21, 48, 0.92));
+  color: #fff; padding: 24px;
+}
+.screen-title { font-size: clamp(38px, 8vw, 76px); font-weight: 900; color: #ff5fa2; text-shadow: 0 3px 0 #b3325f; }
+.screen-sub { font-size: 18px; opacity: 0.9; }
+.screen-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.screen-hint { font-size: 13px; opacity: 0.75; line-height: 1.7; max-width: 320px; }
+.btn {
+  font-size: 20px; font-weight: 800; padding: 12px 30px; border: none; border-radius: 14px;
+  background: #ff7eb3; color: #fff; cursor: pointer; box-shadow: 0 4px 0 #d2447a;
+  transition: transform 0.1s ease;
+}
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d2447a; }
+.btn.secondary { background: #4dabff; box-shadow: 0 4px 0 #2b7fcf; }
+.btn.secondary:active { box-shadow: 0 2px 0 #2b7fcf; }
 .king-flash {
   position: fixed; top: 28%; left: 50%; transform: translateX(-50%);
   font-size: 40px; font-weight: 900; color: #ffd23f; text-shadow: 0 2px 0 #b97e00;

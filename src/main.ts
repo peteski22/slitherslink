@@ -51,13 +51,15 @@ hud.bindMute(audio.isMuted, (muted) => {
 const FIXED_DT = 1 / 60;
 let last = performance.now();
 let acc = 0;
-let prevMass = player.mass;
+let prevEaten = player.eatenPellets;
+let prevEatenBig = player.eatenBig;
 let wasKingAudio = false;
 let lastKingSound = -Infinity;
 
 function refindPlayer(): void {
   player = state.snakes.find((s) => s.id === PLAYER_ID)!;
-  prevMass = player.mass;
+  prevEaten = player.eatenPellets;
+  prevEatenBig = player.eatenBig;
 }
 
 function enterGameOver(): void {
@@ -92,7 +94,10 @@ function frame(now: number): void {
       acc -= FIXED_DT;
     }
     // audio reactions to game events
-    if (player.alive && player.mass > prevMass + 0.001) audio.playEat();
+    if (player.alive) {
+      if (player.eatenPellets > prevEaten) audio.playEat();
+      if (player.eatenBig > prevEatenBig) audio.playEatBig();
+    }
     audio.setBoosting(player.alive && player.boosting);
     const isKing = kingId(state.snakes) === PLAYER_ID;
     if (isKing && !wasKingAudio && now - lastKingSound > 9000) {
@@ -101,7 +106,8 @@ function frame(now: number): void {
     }
     wasKingAudio = isKing;
     best = Math.max(best, scoreOf(player));
-    prevMass = player.mass;
+    prevEaten = player.eatenPellets;
+    prevEatenBig = player.eatenBig;
     if (!player.alive) enterGameOver();
   } else {
     acc = 0; // don't accumulate time while a dialog is up

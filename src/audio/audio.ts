@@ -76,7 +76,24 @@ export class AudioManager {
   }
 
   playEat(): void {
-    this.blip(480, 0.08, 'square', 0.2); // short, low-ish plucky pop
+    this.blip(480, 0.08, 'square', 0.2); // ambient pellet: short, plucky pop
+  }
+
+  playEatBig(): void {
+    // dead-snake body pellet: a fuller, lower downward "chomp" — distinct from the pop
+    if (!this.ctx || !this.master) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, t);
+    osc.frequency.exponentialRampToValueAtTime(300, t + 0.12);
+    g.gain.setValueAtTime(0.28, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+    osc.connect(g);
+    g.connect(this.master);
+    osc.start(t);
+    osc.stop(t + 0.13);
   }
 
   playDie(): void {

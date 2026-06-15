@@ -82,4 +82,48 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     ctx.strokeText(s.name, h.x, y);
     ctx.fillText(s.name, h.x, y);
   }
+
+  // King tracker: when the King is another snake and off-screen, point to them with a
+  // crown + arrow pinned to the screen edge, so you can hunt them down.
+  const kingSnake = king ? state.snakes.find((s) => s.id === king && s.alive) : undefined;
+  if (kingSnake && !kingSnake.isPlayer) {
+    const kp = worldToScreen(cam, kingSnake.segments[0]);
+    const onScreen = kp.x >= 0 && kp.x <= width && kp.y >= 0 && kp.y <= height;
+    if (!onScreen) {
+      const cx = width / 2;
+      const cy = height / 2;
+      const dx = kp.x - cx;
+      const dy = kp.y - cy;
+      const angle = Math.atan2(dy, dx);
+      const margin = 44;
+      const halfW = width / 2 - margin;
+      const halfH = height / 2 - margin;
+      const scaleEdge = Math.min(
+        Math.abs(dx) > 0.001 ? halfW / Math.abs(dx) : Infinity,
+        Math.abs(dy) > 0.001 ? halfH / Math.abs(dy) : Infinity,
+      );
+      const ex = cx + dx * scaleEdge;
+      const ey = cy + dy * scaleEdge;
+      // arrow pointing toward the King
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(16, 0);
+      ctx.lineTo(-8, -10);
+      ctx.lineTo(-8, 10);
+      ctx.closePath();
+      ctx.fillStyle = '#ffd23f';
+      ctx.strokeStyle = '#b97e00';
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+      // crown just inside the arrow
+      ctx.font = '22px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('👑', ex - Math.cos(angle) * 26, ey - Math.sin(angle) * 26);
+    }
+  }
 }

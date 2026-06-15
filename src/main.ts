@@ -115,9 +115,41 @@ function frame(now: number): void {
 
   const cam = makeCamera(player.segments[0], window.innerWidth, window.innerHeight, 1);
   render(ctx, state, cam);
-  if (phase === 'playing') hud.update(state, PLAYER_ID, best);
+  if (phase === 'playing') {
+    if (!mouseControl) drawTouchControls();
+    hud.update(state, PLAYER_ID, best);
+  }
 
   requestAnimationFrame(frame);
+}
+
+/** Draw the on-screen thumbstick (when touched) and a boost button — touch mode only. */
+function drawTouchControls(): void {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const bx = w - 72;
+  const by = h - 72;
+  ctx.beginPath();
+  ctx.arc(bx, by, 44, 0, Math.PI * 2);
+  ctx.fillStyle = controls.isBoosting ? 'rgba(255, 126, 179, 0.6)' : 'rgba(255, 255, 255, 0.14)';
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = '700 13px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('BOOST', bx, by);
+
+  const st = controls.stick;
+  if (st.active) {
+    ctx.beginPath();
+    ctx.arc(st.ox, st.oy, 50, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(st.kx, st.ky, 24, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.42)';
+    ctx.fill();
+  }
 }
 
 // Start screen first — its Play button is the user gesture that unlocks audio.

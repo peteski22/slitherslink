@@ -169,7 +169,7 @@ export function update(
       if (s.boostDropTimer >= BOOST_DROP_INTERVAL) {
         s.boostDropTimer = 0;
         const tail = s.segments[s.segments.length - 1];
-        state.food.push({ id: state.nextFoodId++, pos: { ...tail }, value: FOOD_VALUE, big: false, color: getSkin(s.skinId).body });
+        state.food.push({ id: state.nextFoodId++, pos: { ...tail }, value: FOOD_VALUE, big: false, color: getSkin(s.skinId).body, owner: s.id });
       }
     }
   }

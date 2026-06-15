@@ -77,11 +77,14 @@ body {
   border-radius: 999px; border: 2px solid transparent; background: rgba(255, 255, 255, 0.14); color: #fff;
 }
 .chip.selected { border-color: #ffe600; background: rgba(255, 230, 0, 0.22); }
-.skin-swatch {
-  width: 44px; height: 44px; border-radius: 50%; padding: 0; cursor: pointer;
-  border: 3px solid rgba(255, 255, 255, 0.35); transition: transform 0.1s ease;
+.start-skins { max-width: 420px; }
+.skin-btn {
+  padding: 4px; border-radius: 12px; cursor: pointer; line-height: 0;
+  border: 3px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.08);
+  transition: transform 0.1s ease;
 }
-.skin-swatch.selected { border-color: #ffe600; transform: scale(1.12); }
+.skin-btn canvas { display: block; }
+.skin-btn.selected { border-color: #ffe600; transform: scale(1.08); }
 .start-toggle { display: flex; align-items: center; gap: 8px; font-size: 14px; opacity: 0.85; }
 .king-flash {
   position: fixed; top: 28%; left: 50%; transform: translateX(-50%);

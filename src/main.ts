@@ -1,7 +1,6 @@
 import './style.css';
 import { createGame, update, respawnPlayer, PLAYER_ID } from './game/simulation';
 import { DIFFICULTIES, type Difficulty } from './config/difficulty';
-import { SKINS } from './skins/skins';
 import { Controls } from './input/controls';
 import { makeCamera } from './render/camera';
 import { render } from './render/renderer';
@@ -127,7 +126,6 @@ void screens
   .showStart({
     best,
     initial: { name: playerName, skinId, difficulty, mouseControl },
-    skins: SKINS.map((s) => ({ id: s.id, name: s.name, body: s.body })),
   })
   .then((choices) => {
     playerName = choices.name;

@@ -27,8 +27,10 @@ export class Controls {
   constructor(target: HTMLElement) {
     target.addEventListener('pointerdown', this.onDown, { passive: false });
     target.addEventListener('pointermove', this.onMove, { passive: false });
-    target.addEventListener('pointerup', this.onUp);
-    target.addEventListener('pointercancel', this.onUp);
+    // Release/cancel listen on the window so letting go *anywhere* (e.g. over a dialog)
+    // clears boost/steer state — otherwise boost can "stick" on after dying mid-boost.
+    window.addEventListener('pointerup', this.onUp);
+    window.addEventListener('pointercancel', this.onUp);
     window.addEventListener('keydown', (e) => this.keys.add(e.key));
     window.addEventListener('keyup', (e) => this.keys.delete(e.key));
   }

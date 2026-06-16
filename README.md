@@ -9,9 +9,10 @@ or online strangers of the real thing.
 
 ## Status
 
-**Playable core is working** (the full single-player game runs in a browser). Polish still
-to come: persistence, on-screen HUD + menus/settings, audio, and packaging it as an
-installable home-screen app (PWA). See [the plan](docs/superpowers/plans/2026-06-14-snake-game.md)
+**Playable and installable.** The full single-player game runs in a browser, and it now
+installs to the home screen as an offline PWA (manifest + app icon + service worker).
+Backlog: a settings panel (background-theme + enemy-skin "edition" toggles), a kill count,
+achievements, and special-edition skin unlocks. See [the plan](docs/superpowers/plans/2026-06-14-snake-game.md)
 for what's done and what's left, and [the design spec](docs/superpowers/specs/2026-06-14-snake-game-design.md)
 for the intended behavior.
 
@@ -49,8 +50,9 @@ It must be served over **HTTPS** (required for the service worker / installabili
 is exempt for testing. Once it's live (e.g. at **slitherslink.online**), open it in mobile Safari/
 Chrome and **Add to Home Screen** to install it as a full-screen, offline app.
 
-> Note: the installable-PWA bits (app icon, offline caching) are still being finalised — see the
-> plan's PWA task. The static deploy above already works for playing in a browser today.
+The build emits the PWA `manifest.webmanifest`, an app icon, and a service worker that
+precaches the whole game, so once it has loaded over HTTPS it runs offline (airplane mode)
+and **Add to Home Screen** gives it its own icon and a full-screen, landscape launch.
 
 ## Controls
 

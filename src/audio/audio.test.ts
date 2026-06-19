@@ -16,4 +16,18 @@ describe('AudioManager mute state', () => {
     expect(a.toggleMute()).toBe(false);
     expect(a.isMuted).toBe(false);
   });
+
+  it('stays muted across all play methods when muted', () => {
+    const a = new AudioManager(true);
+    // These should not throw even without an AudioContext — the mute check exits early
+    a.playEat();
+    a.playEatBig();
+    a.playDie();
+    a.playPowerup();
+    a.playPowerupExpire();
+    a.playScreenFiller();
+    a.playKing();
+    a.setBoosting(true);
+    expect(a.isMuted).toBe(true);
+  });
 });

@@ -42,9 +42,10 @@ export class Hud {
   }
 
   bindPause(onPause: () => void, onResume: () => void, onMenu: () => void): void {
-    this.root.querySelector('#hud-pause')!.addEventListener('click', onPause);
-    this.root.querySelector('#pause-resume')!.addEventListener('click', onResume);
-    this.root.querySelector('#pause-menu')!.addEventListener('click', onMenu);
+    const blur = (e: Event) => (e.target as HTMLElement).blur();
+    this.root.querySelector('#hud-pause')!.addEventListener('click', (e) => { onPause(); blur(e); });
+    this.root.querySelector('#pause-resume')!.addEventListener('click', (e) => { onResume(); blur(e); });
+    this.root.querySelector('#pause-menu')!.addEventListener('click', (e) => { onMenu(); blur(e); });
   }
 
   showPaused(): void {
@@ -63,7 +64,7 @@ export class Hud {
     let m = muted;
     const render = () => { btn.textContent = m ? '🔇' : '🔊'; };
     render();
-    btn.addEventListener('click', () => { m = !m; render(); onToggle(m); });
+    btn.addEventListener('click', () => { m = !m; render(); onToggle(m); btn.blur(); });
   }
 
   update(state: GameState, playerId: string, best: number): void {

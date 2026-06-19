@@ -4,6 +4,8 @@ import { createGame, update, PLAYER_ID } from './simulation';
 import { DIFFICULTIES } from '../config/difficulty';
 import { makeFood } from './food';
 import { scoreOf } from './leaderboard';
+import { createSnake } from './snake';
+import type { GameState } from './types';
 
 const seedRng = () => 0.5; // deterministic
 
@@ -56,6 +58,34 @@ describe('simulation', () => {
     player.path[0] = { x: st.world.width / 2 + 50, y: 0 }; // head is driven by path[0]
     update(st, 1 / 60, { steerAngle: null, boost: false }, DIFFICULTIES.easy, seedRng);
     expect(player.alive).toBe(false);
+  });
+
+  it('increments kills on the surviving snake when one head-hits another body', () => {
+    // Minimal world: just the player and one bot, no other snakes.
+    const st: GameState = {
+      world: { width: 4200, height: 2800 },
+      snakes: [],
+      food: [],
+      nextFoodId: 1,
+      tick: 0,
+    };
+    // Bot: a horizontal line of segments near the center.
+    const bot = createSnake({ id: 'bot0', name: 'Bot', isPlayer: false, skinId: 'blue', pos: { x: 0, y: 0 }, heading: 0, mass: 60, grown: true });
+    // Player: head placed on bot's body, facing into it.
+    const player = createSnake({ id: PLAYER_ID, name: 'You', isPlayer: true, skinId: 'pink', pos: { x: 0, y: 100 }, heading: 0, mass: 40, grown: true });
+    player.spawnGraceTicks = 0;
+    const mid = Math.min(4, bot.segments.length - 1);
+    player.path[0] = { ...bot.segments[mid] };
+    player.segments[0] = { ...bot.segments[mid] };
+    player.heading = Math.atan2(
+      bot.segments[mid - 1].y - bot.segments[mid].y,
+      bot.segments[mid - 1].x - bot.segments[mid].x,
+    );
+    st.snakes.push(player, bot);
+    expect(bot.kills).toBe(0);
+    update(st, 1 / 60, { steerAngle: null, boost: false }, DIFFICULTIES.easy, seedRng);
+    expect(player.alive).toBe(false);
+    expect(bot.kills).toBe(1);
   });
 
   it('uses the same world size on every difficulty', () => {

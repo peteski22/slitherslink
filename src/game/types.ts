@@ -16,6 +16,7 @@ export interface Snake {
   score: number;       // accumulated points (pellets + body pellets + kills); independent of mass
   eatenPellets: number; // running count of ambient pellets eaten (drives the eat sound cue)
   eatenBig: number;     // running count of dead-snake body pellets eaten (distinct sound cue)
+  kills: number;
   boosting: boolean;
   alive: boolean;
   boostDropTimer: number; // internal: time accumulator for boost food drops

@@ -114,6 +114,7 @@ export function respawnPlayer(
   skinId?: string,
   mass?: number,   // undefined => START_MASS (respawn); pass old mass for Revive (grows back out)
   score = 0,       // 0 for respawn; restore the old score for Revive
+  kills = 0,
 ): void {
   const idx = state.snakes.findIndex((s) => s.id === PLAYER_ID);
   const old = idx >= 0 ? state.snakes[idx] : undefined;
@@ -121,9 +122,10 @@ export function respawnPlayer(
     id: PLAYER_ID, name, isPlayer: true,
     skinId: skinId ?? old?.skinId ?? 'pink',
     pos: safeSpawnPoint(state, rng), heading: rng() * Math.PI * 2,
-    mass, // collapsed grow-out: a revived snake emerges from a point back to its old size
+    mass,
   });
   fresh.score = score;
+  fresh.kills = kills;
   if (idx >= 0) state.snakes[idx] = fresh;
   else state.snakes.push(fresh);
 }
@@ -208,12 +210,14 @@ export function update(
         // invulnerable: plow through — kill the snake you ram into and keep going
         other.alive = false;
         s.score += POINTS_KILL;
+        s.kills++;
         burstFromSnake(state, other);
         continue;
       }
       // normal: running your head into another's body kills you; they score the kill
       s.alive = false;
       other.score += POINTS_KILL;
+      other.kills++;
       burstFromSnake(state, s);
       break;
     }

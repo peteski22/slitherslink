@@ -56,6 +56,7 @@ export function createSnake(p: CreateSnakeParams): Snake {
     score: 0,
     eatenPellets: 0,
     eatenBig: 0,
+    kills: 0,
     boosting: false,
     alive: true,
     boostDropTimer: 0,

@@ -43,7 +43,8 @@ export class Hud {
     const player = state.snakes.find((s) => s.id === playerId);
     const king = kingId(state.snakes);
 
-    this.scoreEl.textContent = `Score ${player ? scoreOf(player) : 0}  ·  🏆 ${best}`;
+    const kills = player?.kills ?? 0;
+    this.scoreEl.textContent = `Score ${player ? scoreOf(player) : 0}${kills > 0 ? `  ·  ⚡ ${kills}` : ''}  ·  🏆 ${best}`;
 
     // Rows are flex (name left, score right) so scores stay in a fixed column when ranks swap.
     const rows = ranked.slice(0, 5).map((s, i) => {

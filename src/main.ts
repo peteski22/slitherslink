@@ -1,6 +1,7 @@
 import './style.css';
 import { createGame, update, respawnPlayer, PLAYER_ID } from './game/simulation';
 import { DIFFICULTIES, type Difficulty } from './config/difficulty';
+import { FOOD_MODES, type FoodMode } from './config/food-mode';
 import { Controls } from './input/controls';
 import { makeCamera } from './render/camera';
 import { render } from './render/renderer';
@@ -37,11 +38,13 @@ const isTouch = window.matchMedia('(pointer: coarse)').matches;
 let playerName = store.getName();
 let skinId = store.getSkin();
 let difficulty: Difficulty = store.getDifficulty();
+let foodMode: FoodMode = store.getFoodMode();
 let mouseControl = store.getMouseControl(!isTouch); // default: mouse on desktop, touch on tablets
 let settings = DIFFICULTIES[difficulty];
+let foodSettings = FOOD_MODES[foodMode];
 let best = store.getBest();
 
-let state = createGame(difficulty, skinId, rng, playerName);
+let state = createGame(difficulty, skinId, rng, playerName, foodSettings);
 let player = state.snakes.find((s) => s.id === PLAYER_ID)!;
 
 type Phase = 'start' | 'playing' | 'gameover';
@@ -66,26 +69,40 @@ function refindPlayer(): void {
   prevEatenBig = player.eatenBig;
 }
 
+let pendingDeath: { mass: number; score: number } | null = null;
+
 function enterGameOver(): void {
   phase = 'gameover';
   const deadScore = scoreOf(player);
   const deadMass = player.mass;
+  pendingDeath = { mass: deadMass, score: deadScore };
   store.setBest(best);
   audio.playDie();
   audio.setBoosting(false);
   hud.hide();
   void screens.showGameOver(deadScore, best).then((choice) => {
-    if (choice === 'restart') {
-      state = createGame(difficulty, skinId, rng, playerName); // everyone resets
-    } else if (choice === 'revive') {
-      respawnPlayer(state, rng, playerName, skinId, deadMass, deadScore); // keep size + score
-    } else {
-      respawnPlayer(state, rng, playerName, skinId); // small respawn into the existing world
+    if (choice === 'menu') {
+      showStartScreen();
+      return;
     }
-    refindPlayer();
-    hud.show();
-    phase = 'playing';
+    resumeFromDeath(choice);
   });
+}
+
+function resumeFromDeath(choice: 'revive' | 'respawn' | 'restart'): void {
+  if (choice === 'restart') {
+    state = createGame(difficulty, skinId, rng, playerName, foodSettings);
+    pendingDeath = null;
+  } else if (choice === 'revive' && pendingDeath) {
+    respawnPlayer(state, rng, playerName, skinId, pendingDeath.mass, pendingDeath.score);
+    pendingDeath = null;
+  } else {
+    respawnPlayer(state, rng, playerName, skinId);
+    pendingDeath = null;
+  }
+  refindPlayer();
+  hud.show();
+  phase = 'playing';
 }
 
 function frame(now: number): void {
@@ -156,29 +173,44 @@ function drawTouchControls(): void {
   }
 }
 
-// Start screen first — its Play button is the user gesture that unlocks audio.
-hud.hide();
-void screens
-  .showStart({
-    best,
-    initial: { name: playerName, skinId, difficulty, mouseControl },
-  })
-  .then((choices) => {
-    playerName = choices.name;
-    skinId = choices.skinId;
-    difficulty = choices.difficulty;
-    mouseControl = choices.mouseControl;
-    store.setName(playerName);
-    store.setSkin(skinId);
-    store.setDifficulty(difficulty);
-    store.setMouseControl(mouseControl);
-    settings = DIFFICULTIES[difficulty];
-    controls.setMouseMode(mouseControl);
-    audio.resume();
-    audio.startMusic();
-    state = createGame(difficulty, skinId, rng, playerName);
-    refindPlayer();
-    hud.show();
-    phase = 'playing';
-  });
+function showStartScreen(): void {
+  phase = 'start';
+  hud.hide();
+  void screens
+    .showStart({
+      best,
+      initial: { name: playerName, skinId, difficulty, foodMode, mouseControl },
+    })
+    .then((choices) => {
+      playerName = choices.name;
+      skinId = choices.skinId;
+      mouseControl = choices.mouseControl;
+      store.setName(playerName);
+      store.setSkin(skinId);
+      store.setMouseControl(mouseControl);
+      controls.setMouseMode(mouseControl);
+      audio.resume();
+      audio.startMusic();
+
+      if (pendingDeath) {
+        // Came from game-over → menu: respawn into the existing world
+        respawnPlayer(state, rng, playerName, skinId);
+        pendingDeath = null;
+      } else {
+        // Fresh start: apply difficulty/food settings and create a new game
+        difficulty = choices.difficulty;
+        foodMode = choices.foodMode;
+        store.setDifficulty(difficulty);
+        store.setFoodMode(foodMode);
+        settings = DIFFICULTIES[difficulty];
+        foodSettings = FOOD_MODES[foodMode];
+        state = createGame(difficulty, skinId, rng, playerName, foodSettings);
+      }
+      refindPlayer();
+      hud.show();
+      phase = 'playing';
+    });
+}
+
+showStartScreen();
 requestAnimationFrame(frame);

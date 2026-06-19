@@ -18,7 +18,8 @@ export const BOT_TURN_RATE = 7.0;     // bot max turn (rad/sec)
 export const START_MASS = 12;
 export const FOOD_RADIUS = 5;
 export const FOOD_VALUE = 1;          // mass per normal pellet
-export const FOOD_DENSITY = 0.00009;  // target pellets per world unit^2
+export const FOOD_DENSITY = 0.000025; // default target pellets per world unit^2
+export const FOOD_RESPAWN_RATE = 3;   // default max ambient pellets spawned per tick
 export const DEATH_FOOD_SPACING = 34; // arc-length gap between pellets dropped by a dead snake
 export const DEATH_FOOD_VALUE = 3;    // mass per death pellet (glowing/big)
 

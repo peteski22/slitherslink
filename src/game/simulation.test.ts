@@ -43,10 +43,10 @@ describe('simulation', () => {
     const player = st.snakes.find((s) => s.id === PLAYER_ID)!;
     player.spawnGraceTicks = 0; // disable spawn invulnerability for this test
     player.path[0] = { x: st.world.width / 2 + 50, y: 0 }; // head is driven by path[0]
-    const foodBefore = st.food.length;
+    const bigBefore = st.food.filter((f) => f.big).length;
     update(st, 1 / 60, { steerAngle: null, boost: false }, DIFFICULTIES.normal, seedRng);
     expect(player.alive).toBe(false);
-    expect(st.food.length).toBeGreaterThan(foodBefore);
+    expect(st.food.filter((f) => f.big).length).toBeGreaterThan(bigBefore);
   });
 
   it('border is deadly on easy too (rules are difficulty-independent)', () => {

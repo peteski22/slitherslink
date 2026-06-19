@@ -2,8 +2,9 @@ import { vec, distance, rotateToward, type Vec2 } from '../math/vec2';
 import type { GameState, InputState, Snake, World } from './types';
 import type { Difficulty, DifficultySettings } from '../config/difficulty';
 import { DIFFICULTIES } from '../config/difficulty';
+import type { FoodModeSettings } from '../config/food-mode';
 import { createSnake, stepSnake, snakeRadius } from './snake';
-import { tryEat, attractFood, burstFromSnake, replenishFood, randomWorldPoint } from './food';
+import { tryEat, attractFood, burstFromSnake, fillFood, replenishFood, randomWorldPoint } from './food';
 import { headHitsSnake, headOutsideBorder } from './collision';
 import { decideHeading, decideBoost } from './bots';
 import { getSkin } from '../skins/skins';
@@ -47,6 +48,7 @@ export function createGame(
   playerSkinId: string,
   rng: () => number,
   playerName = 'You',
+  foodSettings?: FoodModeSettings,
 ): GameState {
   const settings = DIFFICULTIES[difficulty];
   const state: GameState = {
@@ -55,6 +57,7 @@ export function createGame(
     food: [],
     nextFoodId: 1,
     tick: 0,
+    foodSettings,
   };
 
   state.snakes.push(createSnake({
@@ -79,7 +82,7 @@ export function createGame(
     state.snakes.push(bot);
   }
 
-  replenishFood(state, rng);
+  fillFood(state, rng, foodSettings);
   return state;
 }
 
@@ -228,5 +231,5 @@ export function update(
   }
 
   // 6) Keep ambient food topped up.
-  replenishFood(state, rng);
+  replenishFood(state, rng, state.foodSettings);
 }

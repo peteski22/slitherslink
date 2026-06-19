@@ -77,6 +77,15 @@ export class Hud {
     setTimeout(() => el.remove(), 1700);
   }
 
+  showToast(message: string): void {
+    this.root.querySelector('.toast')?.remove();
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = message;
+    this.root.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+
   show(): void { this.root.classList.remove('hidden'); }
   hide(): void { this.root.classList.add('hidden'); }
 }

@@ -70,18 +70,19 @@ function refindPlayer(): void {
   prevEatenBig = player.eatenBig;
 }
 
-let pendingDeath: { mass: number; score: number } | null = null;
+let pendingDeath: { mass: number; score: number; kills: number } | null = null;
 
 function enterGameOver(): void {
   phase = 'gameover';
   const deadScore = scoreOf(player);
   const deadMass = player.mass;
-  pendingDeath = { mass: deadMass, score: deadScore };
+  const deadKills = player.kills;
+  pendingDeath = { mass: deadMass, score: deadScore, kills: deadKills };
   store.setBest(best);
   audio.playDie();
   audio.setBoosting(false);
   hud.hide();
-  void screens.showGameOver(deadScore, best).then((choice) => {
+  void screens.showGameOver(deadScore, best, deadKills).then((choice) => {
     if (choice === 'menu') {
       showStartScreen();
       return;
@@ -95,7 +96,7 @@ function resumeFromDeath(choice: 'revive' | 'respawn' | 'restart'): void {
     state = createGame(difficulty, skinId, rng, playerName, foodSettings);
     pendingDeath = null;
   } else if (choice === 'revive' && pendingDeath) {
-    respawnPlayer(state, rng, playerName, skinId, pendingDeath.mass, pendingDeath.score);
+    respawnPlayer(state, rng, playerName, skinId, pendingDeath.mass, pendingDeath.score, pendingDeath.kills);
     pendingDeath = null;
   } else {
     respawnPlayer(state, rng, playerName, skinId);

@@ -128,12 +128,12 @@ export class Screens {
   }
 
   /** Show the game-over screen; resolves with the player's chosen action. */
-  showGameOver(score: number, best: number): Promise<DeathChoice> {
+  showGameOver(score: number, best: number, zaps: number): Promise<DeathChoice> {
     return new Promise((resolve) => {
       this.mount.innerHTML = `
         <div class="screen">
           <div class="screen-title">Game Over</div>
-          <div class="screen-sub">Score <b>${score}</b>&nbsp;·&nbsp;🏆 ${best}</div>
+          <div class="screen-sub">Score <b>${score}</b>${zaps > 0 ? `&nbsp;·&nbsp;⚡ ${zaps}` : ''}&nbsp;·&nbsp;🏆 ${best}</div>
           <div class="death-choices">
             <div class="death-row">
               <button class="btn" id="screen-revive">Revive</button>

@@ -123,6 +123,15 @@ export class Hud {
     setTimeout(() => el.remove(), 1700);
   }
 
+  flashScreenFiller(): void {
+    this.root.querySelector('.filler-flash')?.remove();
+    const el = document.createElement('div');
+    el.className = 'filler-flash';
+    el.textContent = 'SCREEN FILLER! 🐍';
+    this.root.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+
   showToast(message: string): void {
     this.root.querySelector('.toast')?.remove();
     const el = document.createElement('div');

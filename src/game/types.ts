@@ -12,7 +12,10 @@ export interface Snake {
   /** Dense trail of recent head positions (head-first); the body is sampled along it. */
   path: Vec2[];
   heading: number; // radians, current facing
-  mass: number;    // drives both length (segment count) and girth (radius)
+  mass: number;        // drives both length (segment count) and girth (radius)
+  score: number;       // accumulated points (pellets + body pellets + kills); independent of mass
+  eatenPellets: number; // running count of ambient pellets eaten (drives the eat sound cue)
+  eatenBig: number;     // running count of dead-snake body pellets eaten (distinct sound cue)
   boosting: boolean;
   alive: boolean;
   boostDropTimer: number; // internal: time accumulator for boost food drops
@@ -24,7 +27,8 @@ export interface Food {
   pos: Vec2;
   value: number;
   big: boolean;     // true for glowing pellets from dead snakes
-  color?: string;   // dead-snake pellets take the snake's colour; ambient pellets leave this unset
+  color?: string;   // dead-snake / boost pellets take the snake's colour; ambient pellets leave this unset
+  owner?: SnakeId;  // the snake that dropped it (boost trail) — re-eating your own scores nothing
 }
 
 export interface World {

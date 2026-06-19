@@ -4,7 +4,7 @@ import { snakeRadius } from './snake';
 import { getSkin } from '../skins/skins';
 import {
   FOOD_RADIUS, FOOD_DENSITY, DEATH_FOOD_SPACING, DEATH_FOOD_VALUE,
-  FOOD_MAGNET_RANGE, FOOD_MAGNET_SPEED,
+  FOOD_MAGNET_RANGE, FOOD_MAGNET_SPEED, POINTS_PELLET, POINTS_BIG_PELLET,
 } from './constants';
 
 export function makeFood(
@@ -41,6 +41,15 @@ export function tryEat(state: GameState, s: Snake): void {
   for (const f of state.food) {
     if (distance(headPos, f.pos) <= reach) {
       s.mass += f.value;
+      if (f.owner === s.id) {
+        // re-collecting your own boost trail: reclaim mass but score nothing (no circle-farming)
+      } else if (f.big) {
+        s.score += POINTS_BIG_PELLET; // score is separate from mass
+        s.eatenBig++;
+      } else {
+        s.score += POINTS_PELLET;
+        s.eatenPellets++;
+      }
     } else {
       remaining.push(f);
     }

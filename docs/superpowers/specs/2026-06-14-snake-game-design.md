@@ -84,8 +84,12 @@ free of canvas/DOM access so it can be unit-tested directly.
   - A dead snake **bursts into glowing pellets coloured to that snake** (so it's clear whose
     remains they are), spaced along its former body and **worth more than ambient food** —
     the big growth moments.
-- **Scoring**: score = snake length/mass (no hard win condition; it's score-chasing like
-  the real game). **Best score is saved locally** and shown on the HUD and game-over screen.
+- **Scoring**: score is its **own accumulator**, independent of mass/length, so boosting
+  (which shrinks you) never costs score. Points come from **eating pellets** (a dead snake's
+  body pellets are worth more) and **kills**. No hard win condition — it's score-chasing like
+  the real game. **Best score is saved locally** and shown on the HUD and game-over screen.
+  (Body **size** is still driven by mass — the snake grows longer and fatter — while score
+  is separate.)
 - **King of the board**: whoever holds **rank #1** on the leaderboard is "the King" and
   wears a **crown** on their snake's head and beside their leaderboard name — player or bot.
   When the player becomes King, a brief "You're the King! 👑" flash and a subtle glow play.
@@ -124,7 +128,13 @@ trap the player:
 - **Hard** — many bots that actively hunt, anticipate the player's path, and try to trap
   them; suited to the 9-10 year old and up.
 
-Difficulty is chosen on the start screen and remembered between sessions.
+Difficulty is chosen on the start screen and remembered between sessions. Enemies are
+seeded at **varied sizes** at game start (biased toward smaller) to bootstrap a lively
+arena rather than everyone starting tiny.
+
+When the **player dies and continues**, a fresh small player respawns into the *existing*
+world — enemies keep their current sizes (this is also how the future Revive works). Only a
+deliberate **Restart** resets everyone to starting size.
 
 ## Skins
 
@@ -162,8 +172,9 @@ This spawn presentation is part of the core look and is not themed away.
 
 ## Persistence
 
-`localStorage` only: best score, last-used skin, selected difficulty, mute preference,
-background theme, and enemy-skin edition. No accounts, no network, no analytics.
+`localStorage` only: best score, **player name** (the snake's name shown on the
+leaderboard), last-used skin, selected difficulty, mute preference, background theme, and
+enemy-skin edition. No accounts, no network, no analytics.
 
 ## Testing
 
@@ -184,9 +195,16 @@ iPad → **Add to Home Screen** → full-screen offline app icon thereafter. Hos
 be chosen at deploy time (e.g. serving from the Mac over home wifi, or any free static host);
 no backend is required.
 
-## Open questions / future ideas (out of scope for v1)
+## Open questions / future ideas
 
-- Optional score-milestone skin unlocks for added replay motivation.
-- **Revive on death** (vs. restart): the snake re-emerges from a single spot and grows
-  out to its previous length, so you keep your size instead of starting over.
-- Additional game modes.yeah f
+Already built since the original plan: Revive-on-death, start + game-over screens, audio
+(music + SFX), score decoupled from length, the off-screen King tracker, and persistence.
+
+Still planned / backlog:
+- **Settings toggles** (Part 2): background **theme** (ours ↔ an alternate field) and an enemy
+  **skin "edition"** — a distinct second skin set (neutrally named, not snake.io-branded).
+- **Kill count** on the HUD and game-over screen.
+- **Achievements** for milestones — score thresholds, kill counts, becoming King, surviving
+  a while, etc.
+- **Special-edition skin unlocks** (e.g. "Otis", "Ray") earned via achievements/score milestones.
+- Additional game modes.

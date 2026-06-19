@@ -1,14 +1,15 @@
 import { vec, distance, rotateToward, type Vec2 } from '../math/vec2';
-import type { GameState, InputState, Snake } from './types';
+import type { GameState, InputState, Snake, World } from './types';
 import type { Difficulty, DifficultySettings } from '../config/difficulty';
 import { DIFFICULTIES } from '../config/difficulty';
-import { createSnake, stepSnake } from './snake';
+import { createSnake, stepSnake, snakeRadius } from './snake';
 import { tryEat, attractFood, burstFromSnake, replenishFood, randomWorldPoint } from './food';
 import { headHitsSnake, headOutsideBorder } from './collision';
 import { decideHeading, decideBoost } from './bots';
+import { getSkin } from '../skins/skins';
 import {
   WORLD_WIDTH, WORLD_HEIGHT, BASE_SPEED, TURN_RATE, BOT_TURN_RATE, MIN_BOOST_MASS, BOOST_DRAIN,
-  BOOST_MULTIPLIER, BOOST_DROP_INTERVAL, FOOD_VALUE, START_MASS, MIN_SPAWN_DISTANCE,
+  BOOST_MULTIPLIER, BOOST_DROP_INTERVAL, FOOD_VALUE, START_MASS, MIN_SPAWN_DISTANCE, POINTS_KILL,
 } from './constants';
 
 export const PLAYER_ID = 'player';
@@ -41,7 +42,12 @@ const BOT_NAMES = [
 ];
 const SKIN_IDS = ['pink', 'blue', 'green', 'dragon', 'dog', 'rainbow', 'sun', 'mint'];
 
-export function createGame(difficulty: Difficulty, playerSkinId: string, rng: () => number): GameState {
+export function createGame(
+  difficulty: Difficulty,
+  playerSkinId: string,
+  rng: () => number,
+  playerName = 'You',
+): GameState {
   const settings = DIFFICULTIES[difficulty];
   const state: GameState = {
     world: { width: WORLD_WIDTH, height: WORLD_HEIGHT },
@@ -52,24 +58,71 @@ export function createGame(difficulty: Difficulty, playerSkinId: string, rng: ()
   };
 
   state.snakes.push(createSnake({
-    id: PLAYER_ID, name: 'You', isPlayer: true, skinId: playerSkinId,
+    id: PLAYER_ID, name: playerName, isPlayer: true, skinId: playerSkinId,
     pos: vec(0, 0), heading: rng() * Math.PI * 2,
   }));
 
   for (let i = 0; i < settings.botCount; i++) {
     const pos = safeSpawnPoint(state, rng);
-    state.snakes.push(createSnake({
+    const bot = createSnake({
       id: `bot${i}`,
       name: BOT_NAMES[i % BOT_NAMES.length],
       isPlayer: false,
       skinId: SKIN_IDS[i % SKIN_IDS.length],
       pos,
       heading: rng() * Math.PI * 2,
-    }));
+      // Enemies are already in the arena at varied sizes (biased small) to bootstrap play.
+      mass: START_MASS + Math.floor(rng() * rng() * 80),
+      grown: true,
+    });
+    bot.score = Math.floor(bot.mass - START_MASS); // seed leaderboard variety from starting size
+    state.snakes.push(bot);
   }
 
   replenishFood(state, rng);
   return state;
+}
+
+/**
+ * Keep an invulnerable snake's head inside the arena so it slides along the wall instead of
+ * leaving. Clamps the authoritative path head and the rendered head to the inner edge.
+ */
+function clampHeadInside(s: Snake, world: World): void {
+  const r = snakeRadius(s);
+  const maxX = world.width / 2 - r;
+  const maxY = world.height / 2 - r;
+  const h = s.path[0];
+  const cx = Math.max(-maxX, Math.min(maxX, h.x));
+  const cy = Math.max(-maxY, Math.min(maxY, h.y));
+  if (cx !== h.x || cy !== h.y) {
+    s.path[0] = { x: cx, y: cy };
+    s.segments[0] = { x: cx, y: cy };
+  }
+}
+
+/**
+ * Drop a fresh (small) player into the EXISTING world — bots and food are untouched, so
+ * enemies keep their sizes. Used for "continue/respawn" after death (vs. a full restart).
+ */
+export function respawnPlayer(
+  state: GameState,
+  rng: () => number,
+  name = 'You',
+  skinId?: string,
+  mass?: number,   // undefined => START_MASS (respawn); pass old mass for Revive (grows back out)
+  score = 0,       // 0 for respawn; restore the old score for Revive
+): void {
+  const idx = state.snakes.findIndex((s) => s.id === PLAYER_ID);
+  const old = idx >= 0 ? state.snakes[idx] : undefined;
+  const fresh = createSnake({
+    id: PLAYER_ID, name, isPlayer: true,
+    skinId: skinId ?? old?.skinId ?? 'pink',
+    pos: safeSpawnPoint(state, rng), heading: rng() * Math.PI * 2,
+    mass, // collapsed grow-out: a revived snake emerges from a point back to its old size
+  });
+  fresh.score = score;
+  if (idx >= 0) state.snakes[idx] = fresh;
+  else state.snakes.push(fresh);
 }
 
 function speedFor(s: Snake): number {
@@ -116,7 +169,7 @@ export function update(
       if (s.boostDropTimer >= BOOST_DROP_INTERVAL) {
         s.boostDropTimer = 0;
         const tail = s.segments[s.segments.length - 1];
-        state.food.push({ id: state.nextFoodId++, pos: { ...tail }, value: FOOD_VALUE, big: false });
+        state.food.push({ id: state.nextFoodId++, pos: { ...tail }, value: FOOD_VALUE, big: false, color: getSkin(s.skinId).body, owner: s.id });
       }
     }
   }
@@ -133,22 +186,33 @@ export function update(
   // 4) Collisions. The border is ALWAYS deadly (every difficulty); then body hits.
   // Snakes inside their spawn-grace window are invulnerable (skip them as victims).
   for (const s of state.snakes) {
-    if (!s.alive || s.spawnGraceTicks > 0) continue;
+    if (!s.alive) continue;
+    if (s.spawnGraceTicks > 0) {
+      clampHeadInside(s, state.world); // invulnerable: can't leave — slide along the wall
+      continue;
+    }
     if (headOutsideBorder(s, state.world)) {
       s.alive = false;
       burstFromSnake(state, s);
     }
   }
   for (const s of state.snakes) {
-    if (!s.alive || s.spawnGraceTicks > 0) continue;
+    if (!s.alive) continue;
     for (const other of state.snakes) {
-      if (other === s) continue; // no self-collision: a snake may cross its own body
-      if (!other.alive) continue;
-      if (headHitsSnake(s, other)) {
-        s.alive = false;
-        burstFromSnake(state, s);
-        break;
+      if (other === s || !other.alive) continue; // no self-collision
+      if (!headHitsSnake(s, other)) continue;
+      if (s.spawnGraceTicks > 0) {
+        // invulnerable: plow through — kill the snake you ram into and keep going
+        other.alive = false;
+        s.score += POINTS_KILL;
+        burstFromSnake(state, other);
+        continue;
       }
+      // normal: running your head into another's body kills you; they score the kill
+      s.alive = false;
+      other.score += POINTS_KILL;
+      burstFromSnake(state, s);
+      break;
     }
   }
 

@@ -15,7 +15,9 @@ export class Controls {
 
   private stickId: number | null = null;
   private stickOrigin = { x: 0, y: 0 };
+  private stickKnob = { x: 0, y: 0 };
   private boostId: number | null = null;
+  private readonly stickMax = 50; // px the knob can travel from the origin
 
   private mouseMode = false;
   private mouseAngle: number | null = null;
@@ -27,8 +29,10 @@ export class Controls {
   constructor(target: HTMLElement) {
     target.addEventListener('pointerdown', this.onDown, { passive: false });
     target.addEventListener('pointermove', this.onMove, { passive: false });
-    target.addEventListener('pointerup', this.onUp);
-    target.addEventListener('pointercancel', this.onUp);
+    // Release/cancel listen on the window so letting go *anywhere* (e.g. over a dialog)
+    // clears boost/steer state — otherwise boost can "stick" on after dying mid-boost.
+    window.addEventListener('pointerup', this.onUp);
+    window.addEventListener('pointercancel', this.onUp);
     window.addEventListener('keydown', (e) => this.keys.add(e.key));
     window.addEventListener('keyup', (e) => this.keys.delete(e.key));
   }
@@ -39,9 +43,20 @@ export class Controls {
     if (!on) { this.mouseAngle = null; this.mouseBoost = false; }
   }
 
-  /** Expose where the stick is drawn so the HUD can render it. */
-  get stick(): { origin: { x: number; y: number }; active: boolean } {
-    return { origin: this.stickOrigin, active: this.stickId !== null };
+  /** Thumbstick draw state: base origin + clamped knob position. */
+  get stick(): { active: boolean; ox: number; oy: number; kx: number; ky: number } {
+    return {
+      active: this.stickId !== null,
+      ox: this.stickOrigin.x,
+      oy: this.stickOrigin.y,
+      kx: this.stickKnob.x,
+      ky: this.stickKnob.y,
+    };
+  }
+
+  /** True when boost is currently engaged (for highlighting the boost button). */
+  get isBoosting(): boolean {
+    return this.boost || (this.mouseMode && this.mouseBoost) || this.keys.has(' ');
   }
 
   private angleFromCenter(x: number, y: number): number {
@@ -59,6 +74,7 @@ export class Controls {
     if (leftHalf && this.stickId === null) {
       this.stickId = e.pointerId;
       this.stickOrigin = { x: e.clientX, y: e.clientY };
+      this.stickKnob = { x: e.clientX, y: e.clientY };
     } else if (!leftHalf && this.boostId === null) {
       this.boostId = e.pointerId;
       this.boost = true;
@@ -74,7 +90,13 @@ export class Controls {
     e.preventDefault();
     const dx = e.clientX - this.stickOrigin.x;
     const dy = e.clientY - this.stickOrigin.y;
-    if (Math.hypot(dx, dy) >= this.deadZone) this.steerAngle = Math.atan2(dy, dx);
+    const mag = Math.hypot(dx, dy);
+    if (mag >= this.deadZone) this.steerAngle = Math.atan2(dy, dx);
+    const clamp = Math.min(mag, this.stickMax);
+    const a = Math.atan2(dy, dx);
+    this.stickKnob = mag > 0
+      ? { x: this.stickOrigin.x + Math.cos(a) * clamp, y: this.stickOrigin.y + Math.sin(a) * clamp }
+      : { x: this.stickOrigin.x, y: this.stickOrigin.y };
   };
 
   private onUp = (e: PointerEvent) => {

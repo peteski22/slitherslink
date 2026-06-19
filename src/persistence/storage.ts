@@ -1,4 +1,5 @@
 import type { Difficulty } from '../config/difficulty';
+import type { FoodMode } from '../config/food-mode';
 
 /**
  * Thin wrapper over localStorage for the handful of values we persist between sessions.
@@ -11,6 +12,7 @@ const KEYS = {
   difficulty: 'snake.difficulty',
   muted: 'snake.muted',
   mouse: 'snake.mouse',
+  foodMode: 'snake.foodMode',
 } as const;
 
 export function getBest(): number {
@@ -56,4 +58,12 @@ export function getMouseControl(fallback: boolean): boolean {
 }
 export function setMouseControl(on: boolean): void {
   localStorage.setItem(KEYS.mouse, on ? '1' : '0');
+}
+
+export function getFoodMode(): FoodMode {
+  const v = localStorage.getItem(KEYS.foodMode);
+  return v === 'famine' || v === 'normal' || v === 'feast' ? v : 'normal';
+}
+export function setFoodMode(mode: FoodMode): void {
+  localStorage.setItem(KEYS.foodMode, mode);
 }

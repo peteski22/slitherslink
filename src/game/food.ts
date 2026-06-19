@@ -3,9 +3,10 @@ import type { Food, GameState, Snake, World } from './types';
 import { snakeRadius } from './snake';
 import { getSkin } from '../skins/skins';
 import {
-  FOOD_RADIUS, FOOD_DENSITY, DEATH_FOOD_SPACING, DEATH_FOOD_VALUE,
+  FOOD_RADIUS, FOOD_DENSITY, FOOD_RESPAWN_RATE, DEATH_FOOD_SPACING, DEATH_FOOD_VALUE,
   FOOD_MAGNET_RANGE, FOOD_MAGNET_SPEED, POINTS_PELLET, POINTS_BIG_PELLET,
 } from './constants';
+import type { FoodModeSettings } from '../config/food-mode';
 
 export function makeFood(
   state: GameState,
@@ -74,10 +75,10 @@ export function burstFromSnake(state: GameState, s: Snake): void {
   }
 }
 
-/** Desired ambient food count for a world (area * density). */
-export function targetFoodCount(world: World): number {
+/** Desired ambient food count for a world (area * density), scaled by food mode. */
+export function targetFoodCount(world: World, densityMultiplier = 1): number {
   const area = world.width * world.height;
-  return Math.round(area * FOOD_DENSITY);
+  return Math.round(area * FOOD_DENSITY * densityMultiplier);
 }
 
 /** A uniformly random point inside the rectangular world (keeps a margin off the walls). */
@@ -86,11 +87,24 @@ export function randomWorldPoint(world: World, rng: () => number): Vec2 {
   return vec((rng() - 0.5) * world.width * m, (rng() - 0.5) * world.height * m);
 }
 
-/** Top up ambient food toward the target count. */
-export function replenishFood(state: GameState, rng: () => number): void {
-  const target = targetFoodCount(state.world);
+/** Fill the world to the target food count in one shot (used at game creation). */
+export function fillFood(state: GameState, rng: () => number, foodSettings?: FoodModeSettings): void {
+  const multiplier = foodSettings?.densityMultiplier ?? 1;
+  const target = targetFoodCount(state.world, multiplier);
   const ambient = state.food.filter((f) => !f.big).length;
   for (let i = ambient; i < target; i++) {
+    makeFood(state, randomWorldPoint(state.world, rng), 1, false);
+  }
+}
+
+/** Top up ambient food toward the target count, capped to a gradual respawn rate. */
+export function replenishFood(state: GameState, rng: () => number, foodSettings?: FoodModeSettings): void {
+  const multiplier = foodSettings?.densityMultiplier ?? 1;
+  const rate = foodSettings?.respawnRate ?? FOOD_RESPAWN_RATE;
+  const target = targetFoodCount(state.world, multiplier);
+  const ambient = state.food.filter((f) => !f.big).length;
+  const toSpawn = Math.min(target - ambient, rate);
+  for (let i = 0; i < toSpawn; i++) {
     makeFood(state, randomWorldPoint(state.world, rng), 1, false);
   }
 }

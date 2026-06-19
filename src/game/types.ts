@@ -43,6 +43,7 @@ export interface GameState {
   food: Food[];
   nextFoodId: number;
   tick: number;
+  foodSettings?: { densityMultiplier: number; respawnRate: number };
 }
 
 /** Per-frame player intent produced by the input layer. */

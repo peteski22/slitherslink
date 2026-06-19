@@ -79,6 +79,25 @@ export class AudioManager {
     this.blip(480, 0.08, 'square', 0.2);
   }
 
+  playScreenFiller(): void {
+    if (!this.ctx || !this.master) return;
+    const t = this.ctx.currentTime;
+    const freqs = [130, 164, 196, 262];
+    for (const freq of freqs) {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.12, t);
+      g.gain.setValueAtTime(0.12, t + 0.6);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+      osc.connect(g);
+      g.connect(this.master!);
+      osc.start(t);
+      osc.stop(t + 1.2);
+    }
+  }
+
   playPowerup(): void {
     if (!this.ctx || !this.master) return;
     const t = this.ctx.currentTime;

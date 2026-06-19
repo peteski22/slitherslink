@@ -42,6 +42,9 @@ export const POINTS_PELLET = 1;       // eating an ambient pellet
 export const POINTS_BIG_PELLET = 2;   // eating a dead snake's (glowing) body pellet
 export const POINTS_KILL = 10;        // making another snake crash into you
 
+// Screen filler
+export const SCREEN_FILLER_MASS = 500;
+
 // Powerups
 export const POWERUP_SPAWN_INTERVAL = 18; // seconds between spawn attempts
 export const POWERUP_MAX_ON_MAP = 3;

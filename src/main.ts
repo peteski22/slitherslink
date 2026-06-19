@@ -10,6 +10,7 @@ import { Controls } from './input/controls';
 import { makeCamera } from './render/camera';
 import { render } from './render/renderer';
 import { scoreOf, kingId } from './game/leaderboard';
+import { SCREEN_FILLER_MASS } from './game/constants';
 import { Hud } from './ui/hud';
 import { Screens } from './ui/screens';
 import { AudioManager } from './audio/audio';
@@ -93,6 +94,7 @@ let acc = 0;
 let prevEaten = player.eatenPellets;
 let prevEatenBig = player.eatenBig;
 let prevPowerupCount = 0;
+let wasScreenFiller = false;
 let wasKingAudio = false;
 let lastKingSound = -Infinity;
 
@@ -100,6 +102,7 @@ function refindPlayer(): void {
   player = state.snakes.find((s) => s.id === PLAYER_ID)!;
   prevEaten = player.eatenPellets;
   prevEatenBig = player.eatenBig;
+  wasScreenFiller = player.mass >= SCREEN_FILLER_MASS;
 
   const puCount = player.activePowerups.length;
   if (puCount > prevPowerupCount) audio.playPowerup();
@@ -168,6 +171,13 @@ function frame(now: number): void {
     best = Math.max(best, scoreOf(player));
     prevEaten = player.eatenPellets;
     prevEatenBig = player.eatenBig;
+
+    if (player.mass >= SCREEN_FILLER_MASS && !wasScreenFiller) {
+      wasScreenFiller = true;
+      hud.flashScreenFiller();
+      audio.playScreenFiller();
+    }
+
     if (!player.alive) enterGameOver();
   } else {
     acc = 0; // don't accumulate time while a dialog is up

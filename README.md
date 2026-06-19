@@ -1,7 +1,7 @@
-# 🐍 Slither Slink
+# 🐍 Slither Snake
 
 A personal, ad-free, **offline** snake.io-style game for the family's tablets (iPad first,
-Android later). Intended home: **slitherslink.online**. One player vs. AI bots: slither around, eat to grow longer *and* fatter,
+Android later). Intended home: **slithersnake.online**. One player vs. AI bots: slither around, eat to grow longer *and* fatter,
 boost, cut rivals off, and chase the "King" crown — with none of the ads, in-app purchases,
 or online strangers of the real thing.
 
@@ -31,7 +31,7 @@ pnpm preview      # serve the production build (use --host to reach it from a ta
 ## Deploying
 
 Pushes to `main` auto-deploy to **GitHub Pages** via the `.github/workflows/deploy.yml`
-action. The live site is at **[slitherslink.online](https://slitherslink.online)**.
+action. The live site is at **[slithersnake.online](https://slithersnake.online)**.
 
 The build produces a `dist/` folder of plain static files — `index.html`, hashed JS/CSS, the
 PWA `manifest.webmanifest`, a service worker that precaches the whole game, and the app icon.

@@ -1,6 +1,6 @@
 {
-  "name": "Slither Slink",
-  "short_name": "Slither Slink",
+  "name": "Slither Snake",
+  "short_name": "Slither Snake",
   "description": "A friendly, offline snake game — eat, grow, and rule the board.",
   "start_url": "./",
   "scope": "./",

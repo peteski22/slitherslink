@@ -32,7 +32,7 @@ export class Screens {
       let activeTab: 'game' | 'snake' = 'game';
       this.mount.innerHTML = `
         <div class="screen">
-          <div class="screen-title">🐍 Slither Slink</div>
+          <div class="screen-title">🐍 Slither Snake</div>
           <div class="screen-sub">${opts.best > 0 ? `Best score: ${opts.best}` : 'Eat, grow, and rule the board.'}</div>
           <div class="start-panel">
             <div class="start-tabs" id="start-tabs">

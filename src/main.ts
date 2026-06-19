@@ -55,12 +55,36 @@ let best = store.getBest();
 let state = createGame(difficulty, skinId, rng, playerName, foodSettings, powerupSettings);
 let player = state.snakes.find((s) => s.id === PLAYER_ID)!;
 
-type Phase = 'start' | 'playing' | 'gameover';
+type Phase = 'start' | 'playing' | 'paused' | 'gameover';
 let phase: Phase = 'start';
 
 hud.bindMute(audio.isMuted, (muted) => {
   audio.toggleMute();
   store.setMuted(muted);
+});
+
+function pauseGame(): void {
+  if (phase !== 'playing') return;
+  phase = 'paused';
+  hud.showPaused();
+}
+
+function resumeGame(): void {
+  if (phase !== 'paused') return;
+  phase = 'playing';
+  last = performance.now();
+  acc = 0;
+  hud.hidePaused();
+}
+
+hud.bindPause(
+  () => { if (phase === 'playing') pauseGame(); else if (phase === 'paused') resumeGame(); },
+  resumeGame,
+  () => { if (phase === 'paused') { hud.hidePaused(); showStartScreen(); } },
+);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && phase === 'playing') pauseGame();
 });
 
 const FIXED_DT = 1 / 60;
@@ -151,8 +175,8 @@ function frame(now: number): void {
 
   const cam = makeCamera(player.segments[0], window.innerWidth, window.innerHeight, 1);
   render(ctx, state, cam, theme);
-  if (phase === 'playing') {
-    if (!mouseControl) drawTouchControls();
+  if (phase === 'playing' || phase === 'paused') {
+    if (phase === 'playing' && !mouseControl) drawTouchControls();
     hud.update(state, PLAYER_ID, best);
   }
 

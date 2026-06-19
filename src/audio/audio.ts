@@ -48,11 +48,16 @@ export class AudioManager {
   toggleMute(): boolean {
     this.muted = !this.muted;
     if (this.master) this.master.gain.value = this.muted ? 0 : 0.5;
+    if (this.muted && this.boostSrc) {
+      this.boostSrc.stop();
+      this.boostSrc = null;
+      this.boostGain = null;
+    }
     return this.muted;
   }
 
   private blip(freq: number, dur: number, type: OscillatorType, vol: number): void {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.master || this.muted) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const g = this.ctx.createGain();
@@ -80,7 +85,7 @@ export class AudioManager {
   }
 
   playScreenFiller(): void {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.master || this.muted) return;
     const t = this.ctx.currentTime;
     const freqs = [130, 164, 196, 262];
     for (const freq of freqs) {
@@ -99,7 +104,7 @@ export class AudioManager {
   }
 
   playPowerup(): void {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.master || this.muted) return;
     const t = this.ctx.currentTime;
     for (let i = 0; i < 3; i++) {
       const osc = this.ctx.createOscillator();
@@ -120,8 +125,7 @@ export class AudioManager {
   }
 
   playEatBig(): void {
-    // dead-snake body pellet: a fuller, lower downward "chomp" — distinct from the pop
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.master || this.muted) return;
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const g = this.ctx.createGain();
@@ -137,7 +141,7 @@ export class AudioManager {
   }
 
   playDie(): void {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.master || this.muted) return;
     const t = this.ctx.currentTime;
     // low descending boom
     const osc = this.ctx.createOscillator();
@@ -169,6 +173,7 @@ export class AudioManager {
   }
 
   playKing(): void {
+    if (this.muted) return;
     [523, 659, 784, 1047].forEach((f, i) => {
       window.setTimeout(() => this.blip(f, 0.16, 'triangle', 0.3), i * 90);
     });
@@ -179,6 +184,7 @@ export class AudioManager {
     if (on === this.boosting) return;
     this.boosting = on;
     if (!this.ctx || !this.master) return;
+    if (on && this.muted) return;
     if (on) {
       // broadband "whoosh": looping white noise through a bandpass, faded in
       const src = this.ctx.createBufferSource();

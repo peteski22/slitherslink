@@ -21,16 +21,40 @@ export class Hud {
     this.root = mount;
     this.root.innerHTML = `
       <button class="mute-btn" id="hud-mute" aria-label="Toggle sound">🔊</button>
+      <button class="pause-btn" id="hud-pause" aria-label="Pause">⏸</button>
       <div class="score-pill" id="hud-score"></div>
       <div class="leaderboard">
         <h4>Leaderboard</h4>
         <div id="hud-board"></div>
       </div>
-      <div class="powerup-bar hidden" id="hud-powerup"><div class="powerup-fill"></div><span class="powerup-label"></span></div>
+      <div class="powerup-bar hidden" id="hud-powerup"></div>
+      <div class="pause-overlay hidden" id="hud-pause-overlay">
+        <div class="pause-content">
+          <div class="pause-title">Paused</div>
+          <button class="btn" id="pause-resume">Resume</button>
+          <button class="btn tertiary" id="pause-menu">Menu</button>
+        </div>
+      </div>
     `;
     this.scoreEl = this.root.querySelector('#hud-score')!;
     this.boardEl = this.root.querySelector('#hud-board')!;
     this.powerupEl = this.root.querySelector('#hud-powerup')!;
+  }
+
+  bindPause(onPause: () => void, onResume: () => void, onMenu: () => void): void {
+    this.root.querySelector('#hud-pause')!.addEventListener('click', onPause);
+    this.root.querySelector('#pause-resume')!.addEventListener('click', onResume);
+    this.root.querySelector('#pause-menu')!.addEventListener('click', onMenu);
+  }
+
+  showPaused(): void {
+    this.root.querySelector('#hud-pause-overlay')!.classList.remove('hidden');
+    (this.root.querySelector('#hud-pause') as HTMLElement).textContent = '▶';
+  }
+
+  hidePaused(): void {
+    this.root.querySelector('#hud-pause-overlay')!.classList.add('hidden');
+    (this.root.querySelector('#hud-pause') as HTMLElement).textContent = '⏸';
   }
 
   /** Wire the mute button: shows the icon for `muted` and calls `onToggle` with the new state. */

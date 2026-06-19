@@ -47,6 +47,29 @@ body {
 }
 .mute-btn:hover { background: rgba(255, 255, 255, 0.3); }
 .mute-btn:active { transform: scale(0.92); }
+.pause-btn {
+  position: fixed; top: calc(12px + var(--sai-top)); left: calc(56px + var(--sai-left));
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  border: none; border-radius: 50%; cursor: pointer;
+  background: rgba(255, 255, 255, 0.16); color: #fff;
+  font-size: 17px; line-height: 1;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.pause-btn:hover { background: rgba(255, 255, 255, 0.3); }
+.pause-btn:active { transform: scale(0.92); }
+.pause-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: center; justify-content: center;
+}
+.pause-content {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.pause-title {
+  font-size: 48px; font-weight: 900; color: #fff;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+}
 .powerup-bar {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; gap: 4px; align-items: center;

@@ -62,6 +62,7 @@ export class Screens {
           </div>
           <button class="btn" id="screen-play">Play</button>
           <a class="credit-link" href="https://buymeacoffee.com/peteski22" target="_blank" rel="noopener">Made with ♥ by peteski</a>
+          <div class="version">v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}</div>
         </div>`;
 
       // Render a mini-snake preview into each skin button's canvas.

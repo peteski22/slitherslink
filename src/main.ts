@@ -10,6 +10,7 @@ import { Hud } from './ui/hud';
 import { Screens } from './ui/screens';
 import { AudioManager } from './audio/audio';
 import * as store from './persistence/storage';
+import { listenForUpdates } from './pwa/updater';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -211,6 +212,8 @@ function showStartScreen(): void {
       phase = 'playing';
     });
 }
+
+listenForUpdates((msg) => hud.showToast(msg));
 
 showStartScreen();
 requestAnimationFrame(frame);

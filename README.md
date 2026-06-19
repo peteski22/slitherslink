@@ -1,7 +1,7 @@
-# 🐍 Snake
+# 🐍 Slither Slink
 
 A personal, ad-free, **offline** snake.io-style game for the family's tablets (iPad first,
-Android later). One player vs. AI bots: slither around, eat to grow longer *and* fatter,
+Android later). Intended home: **slitherslink.online**. One player vs. AI bots: slither around, eat to grow longer *and* fatter,
 boost, cut rivals off, and chase the "King" crown — with none of the ads, in-app purchases,
 or online strangers of the real thing.
 
@@ -9,9 +9,10 @@ or online strangers of the real thing.
 
 ## Status
 
-**Playable core is working** (the full single-player game runs in a browser). Polish still
-to come: persistence, on-screen HUD + menus/settings, audio, and packaging it as an
-installable home-screen app (PWA). See [the plan](docs/superpowers/plans/2026-06-14-snake-game.md)
+**Playable and installable.** The full single-player game runs in a browser, and it now
+installs to the home screen as an offline PWA (manifest + app icon + service worker).
+Backlog: a settings panel (background-theme + enemy-skin "edition" toggles), a kill count,
+achievements, and special-edition skin unlocks. See [the plan](docs/superpowers/plans/2026-06-14-snake-game.md)
 for what's done and what's left, and [the design spec](docs/superpowers/specs/2026-06-14-snake-game-design.md)
 for the intended behavior.
 
@@ -27,13 +28,26 @@ pnpm build        # production build into dist/ (this is the installable PWA)
 pnpm preview      # serve the production build (use --host to reach it from a tablet)
 ```
 
+## Deploying
+
+Pushes to `main` auto-deploy to **GitHub Pages** via the `.github/workflows/deploy.yml`
+action. The live site is at **[slitherslink.online](https://slitherslink.online)**.
+
+The build produces a `dist/` folder of plain static files — `index.html`, hashed JS/CSS, the
+PWA `manifest.webmanifest`, a service worker that precaches the whole game, and the app icon.
+There is **no backend**: the game runs entirely in the browser.
+
+Once loaded over HTTPS it works offline (airplane mode). On a tablet, open the site in
+Safari/Chrome and **Add to Home Screen** to install it as a full-screen, landscape app with
+its own icon.
+
 ## Controls
 
-- **Mouse mode** (desktop testing): the snake steers toward the mouse pointer; **click to boost**.
-  Toggle it on the start screen (once that screen lands) — for now it's on by default in the
-  playable build.
-- **Touch** (primary, on tablets): a thumbstick on the left half to steer, a boost zone on the
-  right half.
+- **Touch** (primary, on tablets): drag the **left half** of the screen to steer (a thumbstick
+  appears under your finger), tap/hold the **right half** (or the BOOST button) to boost. Enabled
+  automatically on touch devices.
+- **Mouse mode** (desktop): the snake steers toward the mouse pointer; **click to boost**.
+  Toggle on the start screen (defaults to on for desktop, off for tablets).
 - Keyboard fallback: arrow keys / WASD to steer, space to boost.
 
 ## How it plays

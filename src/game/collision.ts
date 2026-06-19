@@ -1,4 +1,4 @@
-import { distance, sub, dot, fromAngle } from '../math/vec2';
+import { distance, sub, dot, fromAngle, type Vec2 } from '../math/vec2';
 import type { Snake, World } from './types';
 import { snakeRadius } from './snake';
 import { SEGMENT_SPACING } from './constants';
@@ -7,21 +7,31 @@ import { SEGMENT_SPACING } from './constants';
 const SELF_SKIP = 4;
 
 /**
- * cos of the head's forward half-angle. Only body points within this cone ahead of the
- * head are deadly, so a snake can swerve in front of / cut off others without dying from
- * side or rear contact. ~0.25 ≈ a 75° half-angle (a ~150° frontal arc).
+ * cos of the head's forward half-angle. Only the head's forward cone is deadly, so a snake
+ * can swerve in front of / cut off others without dying from side or rear contact.
+ * ~0.25 ≈ a 75° half-angle (a ~150° frontal arc).
  */
 const HEAD_CONE_COS = 0.25;
 
+/** Closest point to `p` on the line segment a–b. */
+function closestOnSegment(p: Vec2, a: Vec2, b: Vec2): Vec2 {
+  const abx = b.x - a.x;
+  const aby = b.y - a.y;
+  const len2 = abx * abx + aby * aby;
+  let t = len2 > 0 ? ((p.x - a.x) * abx + (p.y - a.y) * aby) / len2 : 0;
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  return { x: a.x + abx * t, y: a.y + aby * t };
+}
+
 /**
- * True if `attacker`'s head runs into a body point of `victim` within its forward cone.
- * When attacker === victim, the first SELF_SKIP points are ignored (the neck).
+ * True if `attacker`'s head runs into `victim`'s body (within its forward cone). The body is
+ * treated as connected segments (a capsule chain), so a fast head can't slip *between* two
+ * body points. When attacker === victim, the first SELF_SKIP points are ignored (the neck).
  */
 export function headHitsSnake(attacker: Snake, victim: Snake): boolean {
   if (!attacker.alive || !victim.alive) return false;
   const headPos = attacker.segments[0];
-  // Require fairly central overlap (not just edges grazing) before it counts as a hit.
-  const hitDist = snakeRadius(attacker) * 0.4 + snakeRadius(victim) * 0.4;
+  const hitDist = (snakeRadius(attacker) + snakeRadius(victim)) * 0.45;
   const startIndex = attacker === victim ? SELF_SKIP : 0;
   // broad-phase: skip distant snakes cheaply
   if (attacker !== victim) {
@@ -29,13 +39,12 @@ export function headHitsSnake(attacker: Snake, victim: Snake): boolean {
     if (distance(headPos, victim.segments[0]) > span) return false;
   }
   const facing = fromAngle(attacker.heading);
-  for (let i = startIndex; i < victim.segments.length; i++) {
-    const seg = victim.segments[i];
-    const d = distance(headPos, seg);
+  for (let i = startIndex; i < victim.segments.length - 1; i++) {
+    const cp = closestOnSegment(headPos, victim.segments[i], victim.segments[i + 1]);
+    const d = distance(headPos, cp);
     if (d > hitDist) continue;
     if (d < 0.0001) return true; // exactly overlapping
-    // only the head's forward cone is deadly
-    if (dot(sub(seg, headPos), facing) / d >= HEAD_CONE_COS) return true;
+    if (dot(sub(cp, headPos), facing) / d >= HEAD_CONE_COS) return true; // only the forward cone
   }
   return false;
 }
